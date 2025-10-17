@@ -1,7 +1,8 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet,} from 'react-native';
 
 import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+import { Text, View,} from '@/components/Themed';
+import { Link } from 'expo-router';
 
 export default function TabOneScreen() {
   return (
@@ -9,6 +10,8 @@ export default function TabOneScreen() {
       <Text style={styles.title}>Tab One</Text>
       <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
       <EditScreenInfo path="app/(tabs)/index.tsx" />
+      <Link style={styles.link} href="/LostFound">LostFound</Link>
+      <Link style={styles.link} href="/Q&AScreen">Q&A</Link>
     </View>
   );
 }
@@ -28,4 +31,8 @@ const styles = StyleSheet.create({
     height: 1,
     width: '80%',
   },
+  link: {
+  color: 'red',
+  fontWeight : 'bold'},
+
 });
