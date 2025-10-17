@@ -97,6 +97,13 @@ export default function LostAndFoundScreen() {
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
       />
+
+      <TouchableOpacity
+        style={styles.addButton}
+        onPress={() => router.push("/PostLFItem")}
+      >
+        <Text style={styles.addButtonText}>＋</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
