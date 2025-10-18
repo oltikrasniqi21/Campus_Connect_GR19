@@ -13,14 +13,14 @@ import {
   View,
 } from "react-native";
 
-import calculatorPhoto from "../assets/images/calculator.jpg";
-import idCardPhoto from "../assets/images/idCard.jpg";
-import keyPhoto from "../assets/images/key.png";
-import pfp from "../assets/images/pfp.png";
-import pfp1 from "../assets/images/pfp1.jpeg";
-import pfp2 from "../assets/images/pfp2.jpeg";
-import pfp3 from "../assets/images/pfp3.png";
-import walletPhoto from "../assets/images/wallet.jpg";
+import calculatorPhoto from "../../assets/images/calculator.jpg";
+import idCardPhoto from "../../assets/images/idCard.jpg";
+import keyPhoto from "../../assets/images/key.png";
+import pfp from "../../assets/images/pfp.png";
+import pfp1 from "../../assets/images/pfp1.jpeg";
+import pfp2 from "../../assets/images/pfp2.jpeg";
+import pfp3 from "../../assets/images/pfp3.png";
+import walletPhoto from "../../assets/images/wallet.jpg";
 
 const { width } = Dimensions.get("window");
 const CARD_MARGIN = 8;
