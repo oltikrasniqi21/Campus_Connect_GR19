@@ -3,9 +3,9 @@ import { useRouter } from "expo-router";
 import {StyleSheet,Text,View,FlatList,Image,TouchableOpacity,SafeAreaView,StatusBar,Dimensions,} from "react-native";
 
 import calculatorPhoto from "../../assets/images/calculator.jpg";
-import walletPhoto from "../../assets/images/calculator.jpg";
-import keyPhoto from "../../assets/images/calculator.jpg";
-import idCardPhoto from "../../assets/images/calculator.jpg";
+import walletPhoto from "../../assets/images/wallet.jpg";
+import keyPhoto from "../../assets/images/key.png";
+import idCardPhoto from "../../assets/images/idCard.jpg";
 
 const { width } = Dimensions.get("window");
 const CARD_MARGIN = 8;
