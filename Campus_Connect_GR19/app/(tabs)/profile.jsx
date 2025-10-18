@@ -1,6 +1,9 @@
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+
+const router = useRouter();
 
 export default function Profile() {
   return (
@@ -8,8 +11,9 @@ export default function Profile() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push("/SavedPosts")}>
           <Ionicons name="menu" size={28} color="#820D0D" />
+          
         </TouchableOpacity>
       </View>
 
