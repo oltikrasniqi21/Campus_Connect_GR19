@@ -12,6 +12,9 @@ export default function TabOneScreen() {
       <EditScreenInfo path="app/(tabs)/index.tsx" />
       <Link style={styles.link} href="/LostFound">LostFound</Link>
       <Link style={styles.link} href="/Q&AScreen">Q&A</Link>
+      <Text style={styles.title}>^Qito svyjn mo qitu^</Text>
+      <Text style={styles.title}>...Posts...</Text>
+
     </View>
   );
 }
