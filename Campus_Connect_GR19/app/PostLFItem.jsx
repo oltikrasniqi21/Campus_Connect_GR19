@@ -8,6 +8,7 @@ export default function PostLFItem() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
+  const [additionalInfo, setAdditionalInfo] = useState("");
 
   return (
     <SafeAreaView style={styles.container}>
@@ -74,6 +75,17 @@ export default function PostLFItem() {
           value={location}
           onChangeText={setLocation}
         />
+
+        <Text style={styles.label}>Additional Information</Text>
+        <View style={styles.infoBox}>
+          <TextInput
+            style={[styles.infoInput, { height: 100 }]}
+            placeholder="Add extra details here (e.g. scratches, stickers, unique marks)"
+            multiline
+            value={additionalInfo}
+            onChangeText={setAdditionalInfo}
+          />
+        </View>
 
         <Text style={styles.label}>Upload Photo</Text>
         <View style={styles.uploadBox}>
@@ -142,6 +154,18 @@ const styles = StyleSheet.create({
     backgroundColor: "#fafafa",
   },
   uploadText: { color: "#777", fontSize: 14 },
+  infoBox: {
+    backgroundColor: "#F5F5F5",
+    borderRadius: 10,
+    padding: 10,
+    marginTop: 6,
+  },
+  infoInput: {
+    color: "#333",
+    fontSize: 14,
+    lineHeight: 20,
+    textAlignVertical: "top",
+  },
   submitButton: {
     backgroundColor: "#820D0D",
     paddingVertical: 14,
