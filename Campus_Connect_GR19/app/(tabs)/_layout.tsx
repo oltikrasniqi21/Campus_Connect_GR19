@@ -10,7 +10,7 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false, // hide top header for each tab
+        headerShown: false,
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         tabBarInactiveTintColor: 'gray',
       }}
