@@ -13,8 +13,6 @@ import {
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 
-// Assuming you have a component that handles date/time picking, 
-// for simplicity here we use TextInput. In a real app, you'd use a DatePicker.
 
 export default function AddEvent() {
   const router = useRouter();

@@ -1,4 +1,4 @@
-import { TouchableOpacity, StyleSheet, Text, View } from 'react-native'
+import { TouchableOpacity, StyleSheet,Text, View } from 'react-native'
 import React from 'react'
 import { Entypo, Ionicons } from '@expo/vector-icons'
 
