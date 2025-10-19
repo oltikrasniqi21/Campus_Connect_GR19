@@ -1,10 +1,10 @@
 import { StyleSheet, ScrollView} from 'react-native';
 
 import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View,} from '@/components/Themed';
+import { Text, View,} from 'react-native';
 import { Link } from 'expo-router';
 import {Flashcard} from '@/components/Homepage/flashcards.jsx';
-
+import { SafeAreaView } from "react-native-safe-area-context";
 export default function TabOneScreen() {
   return (
     <View style={styles.container}>
@@ -25,7 +25,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     justifyContent: 'flex-start',
     alignItems: 'center',
-    
+    backgroundColor: '#ffffff'
     
   },    
   eventsContainer: {

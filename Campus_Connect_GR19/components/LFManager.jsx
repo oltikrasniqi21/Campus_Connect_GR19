@@ -1,12 +1,10 @@
-
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, useLocalSearchParams, useFocusEffect } from "expo-router";
-import React, { useState, useCallback } from "react";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
 import {
   Dimensions,
   FlatList,
   Image,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
@@ -14,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width } = Dimensions.get("window");
 const CARD_MARGIN = 12;
@@ -21,7 +20,6 @@ const CARD_WIDTH = (width - CARD_MARGIN * 3) / 2;
 
 export default function LFManager() {
   const router = useRouter();
-  const params = useLocalSearchParams();
 
   const [items, setItems] = useState([
     {
@@ -49,22 +47,6 @@ export default function LFManager() {
       additionalInfo: "Contains ID and student card.",
     },
   ]);
-
-  useFocusEffect(
-    useCallback(() => {
-      if (params?.newItem) {
-        try {
-          const parsed = JSON.parse(params.newItem);
-          setItems((prev) => {
-            if (prev.some((x) => x.id === parsed.id)) return prev;
-            return [parsed, ...prev];
-          });
-        } catch (err) {
-          console.log("Error parsing new item:", err);
-        }
-      }
-    }, [params?.newItem])
-  );
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
@@ -153,8 +135,6 @@ export default function LFManager() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: 10 }}
       />
-
-
     </SafeAreaView>
   );
 }

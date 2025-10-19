@@ -6,9 +6,9 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  SafeAreaView,
 } from "react-native";
 import React, { useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function QandAScreen() {
   const faqData = [
@@ -124,7 +124,7 @@ export default function QandAScreen() {
       <FlatList
         ListHeaderComponent={
           <>
-            <Text style={styles.title}>Q&A PAGE</Text>
+            
 
             <Text style={styles.sectionHeader}>
               ❗ Pyetje te shpeshta (FAQ)
