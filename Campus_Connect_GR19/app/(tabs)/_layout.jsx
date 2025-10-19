@@ -8,7 +8,7 @@ import { Link } from 'expo-router';
 import AddPostButton, { BUTTON_SIZE } from '@/components/Homepage/addPostButton';
 import SavedButton from '@/components/Homepage/savedButton';
 
-import { Dimensions, StyleSheet } from 'react-native';
+import { Dimensions, StyleSheet,View } from 'react-native';
 
 const screenWidth = Dimensions.get('window').width;
 
