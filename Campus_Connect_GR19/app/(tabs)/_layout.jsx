@@ -12,10 +12,10 @@ import { Dimensions, StyleSheet,View, Text } from 'react-native';
 
 const screenWidth = Dimensions.get('window').width;
 
-const CustomHeaderTitle = ({title = "Campus Connect", iconName="home"}) => (
+const CustomHeaderTitle = () => (
   <View style={styles.headerContainer}>
-    <Ionicons name={iconName} size={screenWidth*0.08} color="#fff" style={styles.icon} /> 
-    <Text style={styles.headerText}>{title}</Text>
+    <Ionicons name='home' size={screenWidth*0.08} color="#fff" style={styles.icon} /> 
+    <Text style={styles.headerText}>Campus Connect</Text>
   </View>
 );
 
@@ -37,6 +37,7 @@ export default function TabLayout() {
         headerTitleStyle: {
           fontSize: screenWidth*0.12,
           fontWeight: 'bold',
+          padding:0,
         },
          tabBarActiveTintColor: '#898589',
         tabBarInactiveTintColor: 'white',
@@ -59,8 +60,8 @@ export default function TabLayout() {
           title: 'Home',
           headerTitle: () => <CustomHeaderTitle />,
           headerRight: () => (
-          <View style={{width:'60%', height:BUTTON_SIZE, backgroundColor: 'transparent' }}> 
-              <View style={{flex:1,flexDirection:'row', justifyContent:'space-between', alignItems:'center', backgroundColor: 'transparent'}}>
+          <View style={{width:'83%', height:BUTTON_SIZE, backgroundColor: 'transparent' }}> 
+              <View style={{flex:1,flexDirection:'row', justifyContent:'space-around', alignItems:'center', backgroundColor: 'transparent'}}>
                 <SavedButton/>
                 <AddPostButton/>
               </View> 
@@ -116,7 +117,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     alignItems: 'flex-start', 
     justifyContent: 'flex-start', 
-        paddingHorizontal: 16,  
     backgroundColor: 'transparent',
     paddingTop:4
   },

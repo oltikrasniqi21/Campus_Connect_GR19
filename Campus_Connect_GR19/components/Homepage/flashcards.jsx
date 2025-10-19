@@ -1,7 +1,7 @@
 import { TouchableOpacity, StyleSheet,Text, View } from 'react-native'
 import React from 'react'
 import { Entypo, Ionicons } from '@expo/vector-icons'
-
+import { Link } from 'expo-router'
 import { Dimensions } from "react-native";
 const { width } = Dimensions.get("window");
 
@@ -13,14 +13,16 @@ export function Flashcard({title, date, time, location}){
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.info}>{date} <Text style={{fontWeight:'bold'}}>{time}</Text>{'\n'}Lokacioni: {location} </Text>
         </View>
-        <View style={[styles.section, {alignItems:'flex-end'}]}>
-            <TouchableOpacity style={styles.seeMoreButton} activeOpacity={0.7} >
-                
-                <Text style={styles.seeMoreText}>See More</Text>
-                <Entypo name="chevron-right" size={width * 0.085} color="#fcfcfc" />
-            </TouchableOpacity>
-        </View>
 
+            
+        <TouchableOpacity activeOpacity={0.7} >
+            <Link href={'/EventDetails'} style={styles.seeMoreLink}>
+                <View style={styles.seeMoreButton}>
+                    <Text style={styles.seeMoreText}>See More</Text>
+                    <Entypo name="chevron-right" size={width * 0.085} color="#fcfcfc" />
+                </View>
+            </Link> 
+        </TouchableOpacity>   
     </View>
   );
 }
@@ -61,19 +63,21 @@ const styles = StyleSheet.create({
     seeMoreButton:{
         flexDirection:'row', 
         alignItems:'center',
-        justifyContent:"center",
+        justifyContent:"flex-end",
         backgroundColor:'#820d0d',
         borderRadius: width * 0.06,
         width:width * 0.33,
         height:width * 0.10,
-        paddingRight:width * 0.01,
     },
-     seeMoreText: {
-    fontSize: width * 0.045, 
-    fontFamily: "SpaceMono",
-    color: "#fcfcfc",
-    fontWeight: "500",
-    marginRight: width * -0.01, 
-    marginBottom: width * 0.01,
-  },
+    seeMoreLink:{
+      paddingHorizontal: 5, 
+    },
+    seeMoreText: {
+        fontSize: width * 0.045, 
+        fontFamily: "SpaceMono",
+        color: "#fcfcfc",
+        fontWeight: "500",
+        marginRight: width * -0.01, 
+        marginBottom: width * 0.01,
+    },
 })
