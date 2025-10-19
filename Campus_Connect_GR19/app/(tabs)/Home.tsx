@@ -1,4 +1,4 @@
-import { StyleSheet,} from 'react-native';
+import { StyleSheet, ScrollView} from 'react-native';
 
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View,} from '@/components/Themed';
@@ -8,19 +8,19 @@ import {Flashcard} from '@/components/Homepage/flashcards.jsx';
 export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <View style={styles.eventsContainer}>
+      <ScrollView style={styles.eventsContainer}>
         <Text style={styles.sectionTitle}>Eventet Aktuale!</Text>
         <Flashcard title={"Festival"} date={"10 tetor"} time={'10:00-15:00'} location={'FIEK'}/>
         <Flashcard title={"Festival"} date={"10 tetor"} time={'10:00-15:00'} location={'FIEK'}/>
         <Flashcard title={"Festival"} date={"10 tetor"} time={'10:00-15:00'} location={'FIEK'}/>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 15,
+    paddingLeft: 10,
     flex: 1,
     flexDirection: 'column',
     justifyContent: 'flex-start',
@@ -30,12 +30,17 @@ const styles = StyleSheet.create({
   },    
   eventsContainer: {
     width: '100%',
-    gap: 15,
+    paddingRight: 15,
+    paddingLeft:5,
+    rowGap: 10,
+    
   },
   sectionTitle:{
     fontSize: 24,
     fontWeight:'bold',
     fontFamily: 'SpaceMono',
+    marginTop:10,
+    marginBottom:10,
 
   }
 

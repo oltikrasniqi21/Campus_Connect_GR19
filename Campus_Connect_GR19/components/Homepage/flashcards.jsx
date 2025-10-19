@@ -37,6 +37,7 @@ const styles = StyleSheet.create({
         alignItems:'center',
         boxSizing:'border-box',
         padding:10,
+        marginBottom:15,
 
     },
     section:{

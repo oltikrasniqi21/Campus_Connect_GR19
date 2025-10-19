@@ -7,7 +7,8 @@ import Colors from '@/constants/Colors';
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View,} from '@/components/Themed';
 import { Link } from 'expo-router';
-import AddPostButton, { BUTTON_SIZE } from '@/components/addPostButton';
+import AddPostButton, { BUTTON_SIZE } from '@/components/Homepage/addPostButton';
+import SavedButton from '@/components/Homepage/savedButton';
 
 import { Dimensions, StyleSheet } from 'react-native';
 
@@ -67,8 +68,11 @@ export default function TabLayout() {
           title: 'Home',
           headerTitle: () => <CustomHeaderTitle />,
           headerRight: () => (
-          <View style={{width:BUTTON_SIZE, height:BUTTON_SIZE, marginRight: 10, backgroundColor: 'transparent' }}> 
-              <AddPostButton/>
+          <View style={{width:'60%', height:BUTTON_SIZE, backgroundColor: 'transparent' }}> 
+              <View style={{flex:1,flexDirection:'row', justifyContent:'space-between', alignItems:'center', backgroundColor: 'transparent'}}>
+                <SavedButton/>
+                <AddPostButton/>
+              </View> 
           </View>),
           tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} />,
           
