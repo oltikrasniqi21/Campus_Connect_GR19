@@ -22,6 +22,7 @@ export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
+    Montserrat: require('../assets/fonts/Montserrat.ttf'),
   });
 
   useEffect(() => {

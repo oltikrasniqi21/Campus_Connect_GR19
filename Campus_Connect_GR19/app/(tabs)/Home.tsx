@@ -8,16 +8,36 @@ import {Flashcard} from '@/components/Homepage/flashcards.jsx';
 export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <Flashcard />
-
+      <View style={styles.eventsContainer}>
+        <Text style={styles.sectionTitle}>Eventet Aktuale!</Text>
+        <Flashcard title={"Festival"} date={"10 tetor"} time={'10:00-15:00'} location={'FIEK'}/>
+        <Flashcard title={"Festival"} date={"10 tetor"} time={'10:00-15:00'} location={'FIEK'}/>
+        <Flashcard title={"Festival"} date={"10 tetor"} time={'10:00-15:00'} location={'FIEK'}/>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    height:280, 
+    padding: 15,
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    
+    
   },    
+  eventsContainer: {
+    width: '100%',
+    gap: 15,
+  },
+  sectionTitle:{
+    fontSize: 24,
+    fontWeight:'bold',
+    fontFamily: 'SpaceMono',
+
+  }
 
 });
 
