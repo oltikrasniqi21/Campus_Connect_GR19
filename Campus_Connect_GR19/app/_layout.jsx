@@ -58,10 +58,10 @@ function RootLayoutNav() {
           name="SavedPosts"
           options={sharedHeaderOptions("Saved Posts")}
         />
-        <Stack.Screen
-          name="items/[id]"
-          options={sharedHeaderOptions("Item Details")}
-        />
+      <Stack.Screen
+  name="items/[id]"
+  options={sharedHeaderOptions("Lost & Found")} 
+    />
       </Stack>
     </ThemeProvider>
   );
