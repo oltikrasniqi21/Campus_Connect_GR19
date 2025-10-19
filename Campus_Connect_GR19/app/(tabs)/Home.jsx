@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   sectionTitle:{
     fontSize: screenWidth*0.07,
     fontWeight:'bold',
-    fontFamily: 'SpaceMono',
+    fontFamily: 'Montserrat',
     marginTop:10,
     marginBottom:10,
 

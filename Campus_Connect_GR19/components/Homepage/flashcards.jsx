@@ -54,11 +54,11 @@ const styles = StyleSheet.create({
     title:{
         fontSize: width * 0.06,
         fontWeight:'bold',
-        fontFamily:'SpaceMono',
+        fontFamily:'Montserrat',
     },
     info:{
         fontSize:width * 0.035,
-        fontFamily:'SpaceMono',
+        fontFamily:'Montserrat',
     },
     seeMoreButton:{
         flexDirection:'row', 
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     },
     seeMoreText: {
         fontSize: width * 0.045, 
-        fontFamily: "SpaceMono",
+        fontFamily: "Montserrat",
         color: "#fcfcfc",
         fontWeight: "500",
         marginRight: width * -0.01, 
