@@ -10,7 +10,7 @@ import SavedButton from '@/components/Homepage/savedButton';
 
 import { Dimensions, StyleSheet,View, Text } from 'react-native';
 
-const screenWidth = Dimensions.get('window').width;
+export const screenWidth = Dimensions.get('window').width;
 
 const CustomHeaderTitle = () => (
   <View style={styles.headerContainer}>
@@ -30,14 +30,17 @@ export default function TabLayout() {
         headerStyle: {
           backgroundColor: '#820D0D',
           height: screenWidth * 0.18,
+          flex:1,
+          flexDirection:'row',
+          alignItems:'center', 
+          justifyContent:'center',
         },
         headerShadowVisible: true,
         headerTintColor: '#fff',
         headerTitleAlign: 'left',
         headerTitleStyle: {
           fontSize: screenWidth*0.12,
-          fontWeight: 'bold',
-          padding:0,
+          fontWeight: 'bold', 
         },
          tabBarActiveTintColor: '#898589',
         tabBarInactiveTintColor: 'white',
@@ -115,20 +118,19 @@ const styles = StyleSheet.create({
     height: screenWidth * 0.16,
     width: '100%',
     flexDirection: 'row', 
-    alignItems: 'flex-start', 
+    alignItems: 'center', 
     justifyContent: 'flex-start', 
     backgroundColor: 'transparent',
     paddingTop:4
   },
   icon: {
     marginRight: 8, 
-    marginTop: 5,
+    marginBottom:10,
   },
   headerText: {
     color: '#fff',
     fontSize: screenWidth*0.06,
     fontWeight: 'bold',
-    fontFamily:'SpaceMono',
-    marginTop: 5,
+    fontFamily:'SpaceMono', 
   },
 });
