@@ -29,23 +29,15 @@ export default function TabLayout() {
         headerShown: true,
         headerStyle: {
           backgroundColor: '#820D0D',
-          flex:1,
-          width:'100%',
           height: screenWidth * 0.18,
-          flexDirection:'row',
-          justifyContent:'center',
-          alignItems:'center',
-          padding:0,
-          margin:0,
         },
         headerShadowVisible: true,
         headerTintColor: '#fff',
+        headerTitleAlign: 'center',
         headerTitleStyle: {
           fontSize: screenWidth*0.12,
           fontWeight: 'bold',
         },
-        
-
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         tabBarInactiveTintColor: 'white',
         tabBarStyle:{
@@ -112,6 +104,7 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   headerContainer: {
+    height: screenWidth * 0.16,
     width: '100%',
     flexDirection: 'row', 
     alignItems: 'center', 
