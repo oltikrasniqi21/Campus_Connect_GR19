@@ -5,6 +5,8 @@ import { Text, View,} from 'react-native';
 import { Link } from 'expo-router';
 import {Flashcard} from '@/components/Homepage/flashcards.jsx';
 import { SafeAreaView } from "react-native-safe-area-context";
+import { screenWidth } from './_layout';
+
 export default function TabOneScreen() {
   return (
     <View style={styles.container}>
@@ -36,7 +38,7 @@ const styles = StyleSheet.create({
     
   },
   sectionTitle:{
-    fontSize: 24,
+    fontSize: screenWidth*0.07,
     fontWeight:'bold',
     fontFamily: 'SpaceMono',
     marginTop:10,
