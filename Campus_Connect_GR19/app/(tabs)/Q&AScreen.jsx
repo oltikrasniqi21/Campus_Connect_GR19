@@ -124,7 +124,7 @@ export default function QandAScreen() {
       <FlatList
         ListHeaderComponent={
           <>
-            <Text style={styles.title}>Q&A PAGE</Text>
+            
 
             <Text style={styles.sectionHeader}>
               ❗ Pyetje te shpeshta (FAQ)

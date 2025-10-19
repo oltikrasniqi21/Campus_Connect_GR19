@@ -19,21 +19,19 @@ const { width } = Dimensions.get("window");
 export default function Profile() {
   const router = useRouter();
   const [menuVisible, setMenuVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(width)).current; // Start completely off-screen to the right
+  const slideAnim = useRef(new Animated.Value(width)).current;
 
   const toggleMenu = () => {
     setMenuVisible((prev) => !prev);
   };
 
-  // Expose toggleMenu to global so _layout.jsx header button can access it
   useEffect(() => {
     global.toggleProfileMenu = toggleMenu;
     return () => {
-      global.toggleProfileMenu = null; // Cleanup
+      global.toggleProfileMenu = null;
     };
   }, [toggleMenu]);
 
-  // Animate the slide menu
   useEffect(() => {
     Animated.timing(slideAnim, {
       toValue: menuVisible ? 0 : width,
@@ -45,7 +43,7 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
-      {/* Profile Info */}
+
       <View style={styles.profileSection}>
         <Image
           source={{ uri: "https://i.pravatar.cc/150?img=12" }}
@@ -60,7 +58,7 @@ export default function Profile() {
         <Text style={styles.subtitle}>budalla ma i madh</Text>
       </View>
 
-      {/* Posts Section */}
+
       <ScrollView
         contentContainerStyle={styles.postsContainer}
         showsVerticalScrollIndicator={false}
@@ -86,7 +84,7 @@ export default function Profile() {
         </View>
       </ScrollView>
 
-      {/* Right-side Slide Menu */}
+
       <Modal visible={menuVisible} transparent animationType="none">
         <TouchableOpacity
           style={styles.overlay}
@@ -101,7 +99,7 @@ export default function Profile() {
           >
             <Text style={styles.menuTitle}>Menu</Text>
 
-            {/* Saved */}
+
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
@@ -113,7 +111,7 @@ export default function Profile() {
               <Text style={styles.menuText}>Saved</Text>
             </TouchableOpacity>
 
-            {/* Edit account details */}
+
             <TouchableOpacity style={styles.menuItem}>
               <Feather name="edit" size={22} color="#fff" />
               <Text style={styles.menuText}>Edit Account Details</Text>
@@ -121,7 +119,7 @@ export default function Profile() {
 
             <View style={styles.spacer} />
 
-            {/* Log out */}
+
             <TouchableOpacity style={styles.logoutButton}>
               <Ionicons name="log-out-outline" size={22} color="#fff" />
               <Text style={styles.menuText}>Log Out</Text>

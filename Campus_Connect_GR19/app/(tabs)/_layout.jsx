@@ -77,7 +77,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="Q&AScreen"
         options={{
-            headerTitle: () => <CustomHeaderTitle title="Q&A" iconName="chatbubble"/>,
+            headerTitle: () => <CustomHeaderTitle title="Q&A Page" iconName="chatbubble"/>,
           headerTitleStyle: styles.headerText,
           tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble" color={color} size={size} />,
         }}
