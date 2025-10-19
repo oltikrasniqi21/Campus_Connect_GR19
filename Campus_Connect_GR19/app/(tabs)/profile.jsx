@@ -25,9 +25,18 @@ export default function Profile() {
     setMenuVisible((prev) => !prev);
   };
 
+  // Expose toggleMenu to global so _layout.jsx header button can access it
+  useEffect(() => {
+    global.toggleProfileMenu = toggleMenu;
+    return () => {
+      global.toggleProfileMenu = null; // Cleanup
+    };
+  }, [toggleMenu]);
+
+  // Animate the slide menu
   useEffect(() => {
     Animated.timing(slideAnim, {
-      toValue: menuVisible ? 0 : width, // 0 = fully visible (aligned to right), width = off-screen
+      toValue: menuVisible ? 0 : width,
       duration: 300,
       easing: Easing.out(Easing.ease),
       useNativeDriver: false,
@@ -36,14 +45,6 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Your Profile</Text>
-        <TouchableOpacity onPress={toggleMenu}>
-          <Ionicons name="menu" size={28} color="#820D0D" />
-        </TouchableOpacity>
-      </View>
-
       {/* Profile Info */}
       <View style={styles.profileSection}>
         <Image
@@ -87,7 +88,6 @@ export default function Profile() {
 
       {/* Right-side Slide Menu */}
       <Modal visible={menuVisible} transparent animationType="none">
-        {/* Background overlay */}
         <TouchableOpacity
           style={styles.overlay}
           activeOpacity={1}
@@ -142,17 +142,6 @@ const styles = StyleSheet.create({
     maxWidth: 450,
     width: "100%",
     alignSelf: "center",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#820D0D",
   },
   profileSection: {
     alignItems: "center",
@@ -214,8 +203,6 @@ const styles = StyleSheet.create({
     color: "#656565",
     textAlign: "center",
   },
-
-  /* ===== Menu Styles ===== */
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.3)",
