@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   FlatList,
   SafeAreaView,
-  ScrollView,
 } from "react-native";
 import React, { useState } from "react";
 
@@ -17,40 +16,36 @@ export default function QandAScreen() {
       id: 1,
       question: "Si mund te raportoj nje send te humbur?",
       answer:
-        "Shko te seksioni Lost & Found dhe ploteso formularin per raportim",
+        "Shko te seksioni Lost & Found dhe ploteso formularin per raportim.",
     },
     {
       id: 2,
       question: "Ku ndodhet zyra e informacionit?",
-      answer: "Ne katin e pare, afer hyrjes kryesore te kampusit",
+      answer: "Ne katin e pare, afer hyrjes kryesore te kampusit.",
     },
     {
       id: 3,
       question: "Si mund te kontaktoj administraten?",
-      answer: "Perdor emailin zyrtar ose formularin e kontaktit ne aplikacion",
+      answer: "Perdor emailin zyrtar ose formularin e kontaktit ne aplikacion.",
     },
   ];
 
   const [openFAQ, setOpenFAQ] = useState(null);
 
   const toggleFAQ = (id) => {
-    if (openFAQ === id) {
-      setOpenFAQ(null);
-    } else {
-      setOpenFAQ(id);
-    }
+    setOpenFAQ(openFAQ === id ? null : id);
   };
 
   const [questions, setQuestions] = useState([
     {
       id: 1,
-      question: "Kur fillon semestri i peste",
+      question: "Kur fillon semestri i peste?",
       answers: ["Ne shtator", "Pas pushimeve verore"],
     },
     {
       id: 2,
-      question: "Ku gjendet bibloteka",
-      answers: ["Ne katin e peste"],
+      question: "Ku gjendet bibloteka?",
+      answers: ["Ne katin e peste."],
     },
   ]);
 
@@ -59,22 +54,20 @@ export default function QandAScreen() {
   const [selectedQuestionId, setSelectedQuestionId] = useState(null);
 
   const hanldeAddQuestion = () => {
-    if (newQuestion.trim() === "") {
-      return;
-    }
+    if (newQuestion.trim() === "") return;
+
     const newQ = {
       id: questions.length + 1,
       question: newQuestion,
       answers: [],
     };
+
     setQuestions([...questions, newQ]);
     setNewQuestion("");
   };
 
   const handleAddAnswer = (id) => {
-    if (newAnswer.trim() === "") {
-      return;
-    }
+    if (newAnswer.trim() === "") return;
 
     const updated = questions.map((q) =>
       q.id === id ? { ...q, answers: [...q.answers, newAnswer] } : q
@@ -85,25 +78,29 @@ export default function QandAScreen() {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.questionText}>❓ {item.question}</Text>
+    <View style={styles.qnaCard}>
+      <Text style={styles.qnaQuestionText}>❓ {item.question}</Text>
 
-      {item.answers.map((ans, index) => (
-        <Text key={index} style={styles.answerText}>
-          💬{ans}
-        </Text>
-      ))}
+      <View style={styles.answersContainer}>
+        <Text style={styles.answersTitle}>Përgjigjet:</Text>
+        {item.answers.map((ans, index) => (
+          <Text key={index} style={styles.qnaAnswerText}>
+            💬 {ans}
+          </Text>
+        ))}
+      </View>
 
       {selectedQuestionId === item.id ? (
         <View style={styles.answerInputBox}>
           <TextInput
-            style={styles.input}
+            style={styles.inputSimple}
             placeholder="Shkruaj Pergjigjen..."
+            placeholderTextColor="#777"
             value={newAnswer}
             onChangeText={setNewAnswer}
           />
           <TouchableOpacity
-            style={styles.button}
+            style={styles.buttonPrimary}
             onPress={() => handleAddAnswer(item.id)}
           >
             <Text style={styles.buttonText}>Shto</Text>
@@ -123,106 +120,220 @@ export default function QandAScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor="#820000" barStyle="light-content" />
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>📚 Campus Connect </Text>
 
-        <Text style={styles.sectionHeader}>❗Pyetje te shpeshta (FAQ)</Text>
-        {faqData.map((faq) => (
-          <View key={faq.id} style={styles.faqCard}>
-            <TouchableOpacity onPress={() => toggleFAQ(faq.id)}>
-              <Text style={styles.faqQuestion}>
-                {openFAQ === faq.id ? "▼" : "▶ "} {faq.question}
-              </Text>
-            </TouchableOpacity>
-            {openFAQ === faq.id && (
-              <Text style={styles.faqAnswer}>{faq.answer}</Text>
-            )}
-          </View>
-        ))}
+      <FlatList
+        ListHeaderComponent={
+          <>
+            <Text style={styles.title}>Q&A PAGE</Text>
 
-        <Text style={styles.sectionHeader}>💬 Pyetje nga perdoruesit</Text>
+            <Text style={styles.sectionHeader}>
+              ❗ Pyetje te shpeshta (FAQ)
+            </Text>
 
-        <View style={styles.addBox}>
-          <TextInput
-            style={styles.input}
-            placeholder="Shto pyetje te re..."
-            value={newQuestion}
-            onChangeText={setNewQuestion}
-          />
-          <TouchableOpacity style={styles.button} onPress={hanldeAddQuestion}>
-            <Text style={styles.buttonText}>Posto</Text>
-          </TouchableOpacity>
-        </View>
+            {faqData.map((faq) => (
+              <View key={faq.id} style={styles.faqItem}>
+                <TouchableOpacity
+                  style={styles.faqHeader}
+                  onPress={() => toggleFAQ(faq.id)}
+                >
+                  <Text style={styles.faqQuestion}>{faq.question}</Text>
+                  <Text style={styles.toggleIcon}>
+                    {openFAQ === faq.id ? "−" : "+"}
+                  </Text>
+                </TouchableOpacity>
+                {openFAQ === faq.id && (
+                  <View style={styles.faqAnswerBox}>
+                    <Text style={styles.faqAnswer}>{faq.answer}</Text>
+                  </View>
+                )}
+              </View>
+            ))}
 
-        <FlatList
-          data={questions}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
-          showsVerticalScrollIndicator={false}
-        />
-      </ScrollView>
+            <Text style={styles.sectionHeader}>💬 Pyetje nga perdoruesit</Text>
+
+            <View style={styles.addQuestionBox}>
+              <TextInput
+                style={styles.inputSimple}
+                placeholder="Shto pyetje te re..."
+                placeholderTextColor="#777"
+                value={newQuestion}
+                onChangeText={setNewQuestion}
+              />
+              <TouchableOpacity
+                style={styles.buttonPrimary}
+                onPress={hanldeAddQuestion}
+              >
+                <Text style={styles.buttonText}>Posto</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        }
+        data={questions}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+        showsVerticalScrollIndicator={false}
+      />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#FCFCFC" },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#F5F6FA",
+  },
   title: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#820000",
     textAlign: "center",
-    marginBottom: 15,
+    marginBottom: 20,
   },
   sectionHeader: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontWeight: "700",
     color: "#D40000",
-    marginVertical: 10,
+    marginTop: 20,
+    borderLeftWidth: 4,
+    borderLeftColor: "#820000",
+    paddingLeft: 10,
+    marginBottom: 10,
   },
-  faqCard: {
-    backgroundColor: "#E0DDD5",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
+
+  faqItem: {
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  faqQuestion: { fontWeight: "bold", color: "#535353", fontSize: 15 },
-  faqAnswer: { marginTop: 6, color: "8B8680", paddingLeft: 10 },
-  header: {
-    fontSize: 20,
+  faqHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  faqQuestion: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    flex: 1,
+    paddingRight: 10,
+  },
+  toggleIcon: {
+    fontSize: 24,
     fontWeight: "bold",
     color: "#820000",
-    marginBottom: 16,
-    textAlign: "center",
   },
-  card: {
+  faqAnswerBox: {
+    marginTop: 8,
+    backgroundColor: "#F9F9F9",
+    borderRadius: 8,
+    padding: 10,
+    marginLeft: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: "#D40000",
+  },
+  faqAnswer: {
+    fontSize: 14,
+    color: "#555",
+    lineHeight: 20,
+  },
+
+  qnaCard: {
     backgroundColor: "#fff",
     borderRadius: 10,
-    padding: 12,
-    marginVertical: 6,
-    borderWidth: 1,
-    borderColor: "#E0DDD5"
+    padding: 15,
+    marginVertical: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
-  questionText: { fontSize: 16, fontWeight: "bold", color: "#333" },
-  answerText: { marginTop: 4, color: "#555" },
-  addBox: { flexDirection: "row", marginBottom: 10 },
-  input: {
+  qnaQuestionText: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#222",
+    marginBottom: 10,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+
+  answersContainer: {
+    backgroundColor: "#F9F9F9",
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  answersTitle: {
+    fontSize: 13,
+    fontWeight: "bold",
+    color: "#820000",
+    marginBottom: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EDEDED",
+    paddingBottom: 3,
+  },
+  qnaAnswerText: {
+    fontSize: 14,
+    color: "#555",
+    backgroundColor: "#fff",
+    borderRadius: 6,
+    padding: 8,
+    marginTop: 5,
+    lineHeight: 20,
+    borderLeftWidth: 3,
+    borderLeftColor: "#820000",
+  },
+
+  addQuestionBox: {
+    flexDirection: "row",
+    marginBottom: 10,
+    marginTop: 10,
+  },
+  answerInputBox: {
+    flexDirection: "row",
+    marginTop: 10,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+  },
+  inputSimple: {
     flex: 1,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    padding: 8,
-    backgroundColor: "#fff"
+    padding: 10,
+    backgroundColor: "#fff",
+    fontSize: 15,
   },
-  button: {
+
+  buttonPrimary: {
     backgroundColor: "#D40000",
     paddingHorizontal: 15,
     justifyContent: "center",
     borderRadius: 8,
-    marginLeft: 6,
+    marginLeft: 8,
   },
-  buttonText: { color: "#fff", fontWeight: "bold" },
-  replyButton: { marginTop: 8, alignSelf: "flex-end" },
-  replyText: { color: "#820000", fontWeight: "600" },
-  answerInputBox: { flexDirection: "row", marginTop: 6 },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+
+  replyButton: {
+    marginTop: 10,
+    alignSelf: "flex-end",
+    paddingHorizontal: 8,
+  },
+  replyText: {
+    color: "#820000",
+    fontWeight: "600",
+    fontSize: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#820000",
+  },
 });
