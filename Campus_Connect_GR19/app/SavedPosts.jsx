@@ -2,9 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Platform, Stack  } from "react-native";
 import { useRouter } from 'expo-router';
 
-// export const options = {
-//   headerTitle: 'Hello',
-// };
 
 const recentlySaved = [
   { id: '1', title: "Study Group at 626.", photo: require('../assets/images/studygroup.jpeg') },
@@ -47,7 +44,6 @@ const openFolder = (folder) => {
   return (
     
     <View style={styles.container}>
-      {/* 1. Folders Section (Now at the top) */}
       <Text style={styles.header}>Your Folders</Text>
       <FlatList
         data={folders}
@@ -55,10 +51,9 @@ const openFolder = (folder) => {
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.columnWrapper}
-        scrollEnabled={false} // Prevent scrolling within the folder list
+        scrollEnabled={false} 
       />
 
-      {/* 2. Recently Saved Section (Now below folders) */}
       <Text style={[styles.header, { marginTop: 30 }]}>Recently Saved</Text>
       <FlatList
         data={recentlySaved}

@@ -13,24 +13,24 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 const folderPosts = {
     '1': [
-        { id: '1-1', title: "ID lost - contact me", photo: { uri: "https://placehold.co/120x90/8B0000/FFFFFF?text=ID" } },
-        { id: '1-2', title: "Important: Scholarship deadline", photo: { uri: "https://placehold.co/120x90/5A5A5A/FFFFFF?text=Deadline" } },
+        { id: '1-1', title: "ID lost - contact me", photo: require('../../assets/images/studentID.jpeg') },
+        { id: '1-2', title: "Important: Scholarship deadline",  photo: require('../../assets/images/studygroup.jpeg') },
     ],
     '2': [
-        { id: '2-1', title: "FIEK Party - Rooftop", photo: { uri: "https://placehold.co/120x90/8B0000/FFFFFF?text=Party" } },
-        { id: '2-2', title: "Open Mic Night", photo: { uri: "https://placehold.co/120x90/5A5A5A/FFFFFF?text=Mic" } },
-        { id: '2-3', title: "Guest Lecture - AI", photo: { uri: "https://placehold.co/120x90/8B0000/FFFFFF?text=AI" } },
+        { id: '2-1', title: "FIEK Party - Rooftop", photo: require('../../assets/images/studentParty.jpeg') },
+        { id: '2-2', title: "Open Mic Night",  photo: require('../../assets/images/studentParty.jpeg') },
+        { id: '2-3', title: "Guest Lecture - AI",  photo: require('../../assets/images/semestri4.jpeg') },
     ],
     '3': [
-        { id: '3-1', title: "Study Group - Calculus", photo: { uri: "https://placehold.co/120x90/5A5A5A/FFFFFF?text=Calc" } },
+        { id: '3-1', title: "Study Group - Calculus",  photo: require('../../assets/images/studygroup.jpeg') },
     ],
     '4': [
-        { id: '4-1', title: "Beach meetup", photo: { uri: "https://placehold.co/120x90/8B0000/FFFFFF?text=Beach" } },
+        { id: '4-1', title: "Beach meetup",  photo: require('../../assets/images/studentParty.jpeg') },
     ],
 };
 
 export default function FolderScreen() {
-    const { id } = useLocalSearchParams(); // ✅ gets the id from the route
+    const { id } = useLocalSearchParams(); 
   const router = useRouter();
     const posts = folderPosts[id] ?? [];
 
@@ -45,7 +45,7 @@ export default function FolderScreen() {
         <View style={styles.container}>
             <View style={styles.headerRow}>
                 <Text style={styles.header}>{name ?? 'Folder'}</Text>
-                <View style={{ width: 60 }} /> {/* spacer to center title */}
+                <View style={{ width: 60 }} /> 
             </View>
 
             <FlatList

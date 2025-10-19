@@ -5,7 +5,6 @@ export default function NewPostScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Create Event</Text>
-      {/* Add your form fields here */}
     </SafeAreaView>
   );
 }
