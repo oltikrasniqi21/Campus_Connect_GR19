@@ -7,75 +7,66 @@ import {
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
+  Platform,
+  StatusBar,
 } from "react-native";
-
-import pfp from "../assets/images/pfp.png";
+import { useLocalSearchParams } from "expo-router";
 
 export default function ItemDetails() {
-  const item = {
-    title: "Lost Calculator",
-    description:
-      "Black Casio calculator last seen in FIEK Lab 3 near workstation 7.",
-    status: "Lost",
-    location: "FIEK Building, Lab 3",
-    photo: require("../assets/images/calculator.jpg"),
-    color: "Black",
-    brand: "Casio",
-    category: "Electronics",
-    postedBy: "Riga",
-    pfp: pfp,
-  };
+  const params = useLocalSearchParams();
+  const isLost = params.status === "Lost";
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={styles.header}>
-          {item.status === "Lost" ? "Lost Item" : "Found Item"}
-        </Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View style={{ height: 20 }} />
 
-        <Image source={item.photo} style={styles.image} />
+        <Image
+          source={require("../../assets/images/wallet.jpg")}
+          style={styles.image}
+        />
 
         <View style={styles.content}>
           <View
             style={[
               styles.statusBadge,
-              {
-                backgroundColor: item.status === "Lost" ? "#FFD6D6" : "#D8F5D2",
-              },
+              { backgroundColor: isLost ? "#FFD6D6" : "#D8F5D2" },
             ]}
           >
             <Text
               style={[
                 styles.statusText,
-                { color: item.status === "Lost" ? "#C80000" : "#2E7D32" },
+                { color: isLost ? "#C80000" : "#2E7D32" },
               ]}
             >
-              {item.status}
+              {params.status}
             </Text>
           </View>
 
-          <Text style={styles.itemTitle}>{item.title}</Text>
-          <Text style={styles.location}>📍 {item.location}</Text>
-          <Text style={styles.description}>{item.description}</Text>
+          <Text style={styles.itemTitle}>{params.title}</Text>
+          <Text style={styles.location}>📍 {params.location}</Text>
+          <Text style={styles.description}>{params.description}</Text>
         </View>
 
         <View style={styles.infoBox}>
           <Text style={styles.infoTitle}>Additional Information</Text>
           <Text style={styles.infoText}>
-            This calculator may have a small scratch near the display and a blue
-            sticker on the back. If found, please handle it carefully and return
-            it to the Lost & Found office.
+            {params.additionalInfo || "No additional information provided."}
           </Text>
         </View>
 
         <View style={styles.postedByContainer}>
-          <Image source={item.pfp} style={styles.profileImage} />
-          <Text style={styles.postedByText}>Posted by {item.postedBy}</Text>
+          <Image
+            source={require("../../assets/images/pfp.png")}
+            style={styles.profileImage}
+          />
+          <View>
+            <Text style={styles.postedByText}>Posted by {params.postedBy}</Text>
+            <Text style={styles.postedTime}>{params.postedTime}</Text>
+          </View>
         </View>
 
         <View style={styles.actions}>
-          <Text style={styles.postedBy}> Posted By {item.postedBy}</Text>
-
           <TouchableOpacity style={styles.callButton}>
             <Text style={styles.callText}>📞 Call Now</Text>
           </TouchableOpacity>
@@ -84,26 +75,27 @@ export default function ItemDetails() {
             <Text style={styles.messageText}>✉️ Send Email</Text>
           </TouchableOpacity>
         </View>
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 20 },
-  header: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#820D0D",
-    marginVertical: 10,
-    textAlign: "center",
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
   },
   image: {
     width: "100%",
-    height: 230,
+    height: 240,
     borderRadius: 12,
     resizeMode: "cover",
-    marginBottom: 10,
+    marginBottom: 15,
   },
   content: { paddingBottom: 10 },
   statusBadge: {
@@ -116,7 +108,8 @@ const styles = StyleSheet.create({
   statusText: { fontWeight: "600" },
   itemTitle: { fontSize: 18, fontWeight: "700", color: "#000" },
   location: { color: "#820D0D", marginVertical: 4 },
-  description: { color: "#555", marginBottom: 12, fontSize: 14 },
+  description: { color: "#555", marginBottom: 12, fontSize: 14, lineHeight: 20 },
+
   infoBox: {
     backgroundColor: "#F5F5F5",
     borderRadius: 10,
@@ -129,33 +122,32 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     fontSize: 15,
   },
-  infoText: {
-    color: "#333",
-    fontSize: 14,
-    lineHeight: 20,
-  },
+  infoText: { color: "#333", fontSize: 14, lineHeight: 20 },
+
   postedByContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 20,
+    marginTop: 25,
     marginBottom: 10,
   },
-  profileImage: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    marginRight: 8,
-  },
+  profileImage: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
   postedByText: {
     color: "#444",
     fontWeight: "600",
-    fontSize: 14,
+    fontSize: 15,
+    textAlign: "center",
+  },
+  postedTime: {
+    color: "#777",
+    fontSize: 12,
+    fontStyle: "italic",
+    textAlign: "center",
   },
 
   actions: {
     alignItems: "center",
-    marginTop: 10,
+    marginTop: 20,
     marginBottom: 40,
   },
   callButton: {
@@ -166,11 +158,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  callText: {
-    color: "#fff",
-    fontWeight: "700",
-    fontSize: 16,
-  },
+  callText: { color: "#fff", fontWeight: "700", fontSize: 16 },
   messageButton: {
     backgroundColor: "#D8D8D8",
     width: "90%",
@@ -178,9 +166,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  messageText: {
-    color: "#000",
-    fontWeight: "600",
-    fontSize: 16,
-  },
+  messageText: { color: "#000", fontWeight: "600", fontSize: 16 },
 });
