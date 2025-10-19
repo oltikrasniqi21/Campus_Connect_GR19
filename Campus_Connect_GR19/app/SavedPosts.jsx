@@ -1,16 +1,18 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Platform, Stack  } from "react-native";
+import { useRouter } from 'expo-router';
 
-export const options = {
-  headerTitle: 'Hello',
-};
+// export const options = {
+//   headerTitle: 'Hello',
+// };
 
 const recentlySaved = [
-  { id: '1', title: "Study Group at 626.", photo: { uri: "https://placehold.co/120x90/8B0000/FFFFFF?text=Study Groups" } },
-  { id: '2', title: "FIEK Party at Rooftop", photo: { uri: "https://placehold.co/120x90/5A5A5A/FFFFFF?text=FIEK Party" } },
-  { id: '3', title: "Regjistrimi per semestrin e 4", photo: { uri: "https://placehold.co/120x90/8B0000/FFFFFF?text=Semestri 4" } },
-  { id: '4', title: "ID e humbur", photo: { uri: "https://placehold.co/120x90/5A5A5A/FFFFFF?text=ID" } },
+  { id: '1', title: "Study Group at 626.", photo: require('../assets/images/studygroup.jpeg') },
+  { id: '2', title: "FIEK Party at Rooftop", photo: require('../assets/images/studentParty.jpeg') },
+  { id: '3', title: "Regjistrimi per semestrin e 4", photo: require('../assets/images/semestri4.jpeg') },
+  { id: '4', title: "ID e humbur", photo: require('../assets/images/studentID.jpeg') },
 ];
+
 
 const folders = [
   { id: '1', name: "Important" },
@@ -20,10 +22,16 @@ const folders = [
 ];
 
 export default function SavedPosts() {
+   
+  const router = useRouter();
+
+const openFolder = (folder) => {
+  router.push(`/SavedFolder/${folder.id}`);
+};
 
  
   const renderFolder = ({ item }) => (
-    <TouchableOpacity style={styles.folderCard}>
+    <TouchableOpacity style={styles.folderCard} onPress={() => openFolder(item)}>
       <Text style={styles.folderTitle}>{item.name}</Text>
       <Text style={styles.folderSubtitle}>4 items</Text>
     </TouchableOpacity>
