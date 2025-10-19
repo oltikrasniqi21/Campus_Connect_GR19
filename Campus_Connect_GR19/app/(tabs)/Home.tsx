@@ -3,39 +3,41 @@ import { StyleSheet,} from 'react-native';
 import EditScreenInfo from '@/components/EditScreenInfo';
 import { Text, View,} from '@/components/Themed';
 import { Link } from 'expo-router';
+import {Flashcard} from '@/components/Homepage/flashcards.jsx';
 
 export default function TabOneScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-      <Link style={styles.link} href="/LostFound">LostFound</Link>
-      <Link style={styles.link} href="/Q&AScreen">Q&A</Link>
-      <Text style={styles.title}>^Qito svyjn mo qitu^</Text>
-      <Text style={styles.title}>...Posts...</Text>
-
+      <View style={styles.eventsContainer}>
+        <Text style={styles.sectionTitle}>Eventet Aktuale!</Text>
+        <Flashcard title={"Festival"} date={"10 tetor"} time={'10:00-15:00'} location={'FIEK'}/>
+        <Flashcard title={"Festival"} date={"10 tetor"} time={'10:00-15:00'} location={'FIEK'}/>
+        <Flashcard title={"Festival"} date={"10 tetor"} time={'10:00-15:00'} location={'FIEK'}/>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    padding: 15,
     flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    justifyContent: 'center',
+    
+    
+  },    
+  eventsContainer: {
+    width: '100%',
+    gap: 15,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
-  },
-  link: {
-  color: 'red',
-  fontWeight : 'bold'},
+  sectionTitle:{
+    fontSize: 24,
+    fontWeight:'bold',
+    fontFamily: 'SpaceMono',
+
+  }
 
 });
+
