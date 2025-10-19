@@ -44,8 +44,7 @@ export default function FolderScreen() {
     return (
         <View style={styles.container}>
             <View style={styles.headerRow}>
-                <Text style={styles.header}>{name ?? 'Folder'}</Text>
-                <View style={{ width: 60 }} /> 
+                    <View style={{ width: 60 }} /> 
             </View>
 
             <FlatList
