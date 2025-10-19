@@ -38,10 +38,7 @@ export default function PostLFItem() {
       pfp: require("../assets/images/pfp.png"),
     };
 
-    router.replace({
-      pathname: "/LostFound",
-      params: { newItem: JSON.stringify(newItem) },
-    });
+    router.back(); 
   };
 
   return (
@@ -58,7 +55,10 @@ export default function PostLFItem() {
             onPress={() => setPostType("Lost")}
           >
             <Text
-              style={[styles.typeText, postType === "Lost" && styles.activeLostText]}
+              style={[
+                styles.typeText,
+                postType === "Lost" && styles.activeLostText,
+              ]}
             >
               Lost
             </Text>
@@ -127,6 +127,7 @@ export default function PostLFItem() {
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Text style={styles.submitText}>Post</Text>
         </TouchableOpacity>
+
         <View style={{ height: 50 }} />
       </ScrollView>
     </SafeAreaView>
