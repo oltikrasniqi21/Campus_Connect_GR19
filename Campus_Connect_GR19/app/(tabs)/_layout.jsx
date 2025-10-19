@@ -42,7 +42,7 @@ export default function TabLayout() {
           fontSize: screenWidth*0.12,
           fontWeight: 'bold', 
         },
-         tabBarActiveTintColor: '#898589',
+         tabBarActiveTintColor: '#420202ff',
         tabBarInactiveTintColor: 'white',
         tabBarStyle:{
           height:screenWidth * 0.14,
