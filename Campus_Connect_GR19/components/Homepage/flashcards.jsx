@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
     container:{
         width:'100%',
         height: width * 0.25,
-        backgroundColor:'#FCF9EA',
+        backgroundColor:'#efefefff',
         borderRadius:20,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 5 },
