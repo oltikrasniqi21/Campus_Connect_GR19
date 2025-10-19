@@ -55,7 +55,7 @@ export default function Profile() {
             <Ionicons name="pencil" size={20} color="#D40000" />
           </TouchableOpacity>
         </View>
-        <Text style={styles.subtitle}>budalla ma i madh</Text>
+        <Text style={styles.subtitle}>Student Ne Fakultetin e Inxhinierise Kompjuterike</Text>
       </View>
 
 
@@ -71,8 +71,8 @@ export default function Profile() {
             { id: 2, title: "Study Group", image: "https://picsum.photos/200/200?random=2" },
             { id: 3, title: "Event Per Data Security", image: "https://picsum.photos/200/200?random=3" },
             { id: 4, title: "This is the best University Ever o My gOD!", image: "https://picsum.photos/200/200?random=4" },
-            { id: 5, title: "Football Game", image: "https://picsum.photos/200/200?random=5" },
-            { id: 6, title: "Group Study", image: "https://picsum.photos/200/200?random=6" },
+            { id: 5, title: "Mbledhemi per loje Volleyboll", image: "https://picsum.photos/200/200?random=5" },
+            { id: 6, title: "Trajnim ne UI/UX", image: "https://picsum.photos/200/200?random=6" },
           ].map((post) => (
             <TouchableOpacity key={post.id} style={styles.postItem}>
               <Image source={{ uri: post.image }} style={styles.postImage} />
