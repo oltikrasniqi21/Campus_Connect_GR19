@@ -53,6 +53,9 @@ export default function QandAScreen() {
   const [newQuestion, setNewQuestion] = useState("");
   const [newAnswer, setNewAnswer] = useState("");
   const [selectedQuestionId, setSelectedQuestionId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editingText, setEditingText] = useState("");
+  const [searchText, setSearchText] = useState("");
 
   const hanldeAddQuestion = () => {
     if (newQuestion.trim() === "") return;
@@ -78,6 +81,34 @@ export default function QandAScreen() {
     setSelectedQuestionId(null);
   };
 
+  const startEditing = (item) => {
+    setEditingId(item.id);
+    setEditingText(item.question);
+  };
+
+  const saveEdit = () => {
+    if (editingText.trim() === "") {
+      return;
+    }
+
+    const updated = questions.map((q) =>
+      q.id === editingId ? { ...q, question: editingText } : q
+    );
+
+    setQuestions(updated);
+    setEditingId(null);
+    setEditingText("");
+  };
+
+  const deleteQuestion = (id) => {
+    const updated = questions.filter((q) => q.id !== id);
+    setQuestions(updated);
+  };
+
+  const filteredQuestions = questions.filter((q) =>
+    q.question.toLowerCase().includes(searchText.toLowerCase())
+  );
+
   const renderItem = ({ item }) => (
     <QnACard
       item={item}
@@ -86,6 +117,12 @@ export default function QandAScreen() {
       setSelectedQuestionId={setSelectedQuestionId}
       setNewAnswer={setNewAnswer}
       handleAddAnswer={handleAddAnswer}
+      editingId={editingId}
+      editingText={editingText}
+      startEditing={startEditing}
+      setEditingText={setEditingText}
+      saveEdit={saveEdit}
+      deleteQuestion={deleteQuestion}
     />
   );
 
@@ -96,6 +133,15 @@ export default function QandAScreen() {
       <FlatList
         ListHeaderComponent={
           <>
+            <View>
+              <TextInput
+                style={styles.inputSimple}
+                placeholder="Kerko pyetjen..."
+                placeholderTextColor="#777"
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+            </View>
             <Text style={styles.sectionHeader}>
               ❗ Pyetje te shpeshta (FAQ)
             </Text>
@@ -138,7 +184,7 @@ export default function QandAScreen() {
             </View>
           </>
         }
-        data={questions}
+        data={filteredQuestions}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
@@ -229,5 +275,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
     fontSize: 14,
+  },
+  
+  searchBox: {
+    marginBottom: 10,
+  },
+  inputSimple: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: "#fff",
+    fontSize: 15,
   },
 });
