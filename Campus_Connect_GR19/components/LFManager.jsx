@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -13,6 +13,10 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
+
+
 
 const { width } = Dimensions.get("window");
 const CARD_MARGIN = 12;
@@ -20,33 +24,23 @@ const CARD_WIDTH = (width - CARD_MARGIN * 3) / 2;
 
 export default function LFManager() {
   const router = useRouter();
+  const [items, setItems] = useState([]);
 
-  const [items, setItems] = useState([
-    {
-      id: "1",
-      title: "Lost Calculator",
-      description: "Black Casio calculator last seen in FIEK Lab 3",
-      status: "Lost",
-      photo: require("../assets/images/calculator.jpg"),
-      location: "FIEK",
-      postedBy: "Riga",
-      postedTime: "2h ago",
-      pfp: require("../assets/images/pfp.png"),
-      additionalInfo: "Might have a blue sticker on the back.",
-    },
-    {
-      id: "2",
-      title: "Found Wallet",
-      description: "Brown wallet found near cafeteria",
-      status: "Found",
-      photo: require("../assets/images/wallet.jpg"),
-      location: "Cafeteria",
-      postedBy: "Rreze",
-      postedTime: "1h ago",
-      pfp: require("../assets/images/pfp1.jpeg"),
-      additionalInfo: "Contains ID and student card.",
-    },
-  ]);
+  const loadItems = async () => {
+    try {
+      const storedItems = await AsyncStorage.getItem("lfItems");
+      const loadedItems = storedItems ? JSON.parse(storedItems) : [];
+      setItems(loadedItems);
+    } catch (error) {
+      console.error("Error loading items:", error);
+    } 
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadItems();
+    }, [])
+  );``
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
