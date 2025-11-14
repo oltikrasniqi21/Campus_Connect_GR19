@@ -18,13 +18,13 @@ export default function ItemDetails() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={{ height: 20 }} />
 
-        <Image
-          source={require("../../assets/images/wallet.jpg")}
-          style={styles.image}
-        />
+        <Image source={{ uri: params.photo }} style={styles.image} />
 
         <View style={styles.content}>
           <View
@@ -108,7 +108,12 @@ const styles = StyleSheet.create({
   statusText: { fontWeight: "600" },
   itemTitle: { fontSize: 18, fontWeight: "700", color: "#000" },
   location: { color: "#820D0D", marginVertical: 4 },
-  description: { color: "#555", marginBottom: 12, fontSize: 14, lineHeight: 20 },
+  description: {
+    color: "#555",
+    marginBottom: 12,
+    fontSize: 14,
+    lineHeight: 20,
+  },
 
   infoBox: {
     backgroundColor: "#F5F5F5",
