@@ -28,27 +28,27 @@ export default function PostLFItem() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleSubmit = async () => {
-    if(!postType.trim()) {
+    if (!postType.trim()) {
       setError("Please select Lost or Found");
       return;
     }
-    if (!title.trim()){
+    if (!title.trim()) {
       setError("Please enter a title for the item.");
       return;
     }
-    if (!description.trim()){
+    if (!description.trim()) {
       setError("Please enter a description for the item.");
       return;
     }
-    if(title.trim().length < 5){
+    if (title.trim().length < 5) {
       setError("Title must be at least 5 characters long.");
       return;
     }
-    if(!location.trim()){
+    if (!location.trim()) {
       setError("Please enter the location where the item was lost or found.");
       return;
     }
-    if(!additionalInfo.trim()){
+    if (!additionalInfo.trim()) {
       setError("Please provide additional information about the item.");
       return;
     }
@@ -63,8 +63,7 @@ export default function PostLFItem() {
       status: postType,
       postedBy: "Current User",
       postedTime: "Just now",
-      photo: photo || require("../assets/images/idCard.jpg"),
-      pfp: require("../assets/images/pfp.png"),
+      photo: photo || "https://i.imgur.com/2nCt3Sbl.jpg",
     };
 
     try {
@@ -72,7 +71,7 @@ export default function PostLFItem() {
       const items = stored ? JSON.parse(stored) : [];
       items.push(newItem);
       await AsyncStorage.setItem("lfItems", JSON.stringify(items));
-    } catch (err){
+    } catch (err) {
       console.error("Error saving item:", err);
     }
     setModalVisible(true);
@@ -80,8 +79,7 @@ export default function PostLFItem() {
   const closeModal = () => {
     setModalVisible(false);
     router.push("/(tabs)/LostFound");
-  }
-
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -93,7 +91,10 @@ export default function PostLFItem() {
 
         <View style={styles.postTypeContainer}>
           <TouchableOpacity
-            style={[styles.typeButton, postType === "Lost" && styles.activeLost]}
+            style={[
+              styles.typeButton,
+              postType === "Lost" && styles.activeLost,
+            ]}
             onPress={() => setPostType("Lost")}
           >
             <Text
@@ -107,7 +108,10 @@ export default function PostLFItem() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.typeButton, postType === "Found" && styles.activeFound]}
+            style={[
+              styles.typeButton,
+              postType === "Found" && styles.activeFound,
+            ]}
             onPress={() => setPostType("Found")}
           >
             <Text
@@ -177,7 +181,7 @@ export default function PostLFItem() {
         <View style={{ height: 50 }} />
       </ScrollView>
 
-         <Modal visible={modalVisible} transparent animationType="fade">
+      <Modal visible={modalVisible} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Item posted successfully!</Text>
@@ -188,7 +192,6 @@ export default function PostLFItem() {
           </View>
         </View>
       </Modal>
-
     </SafeAreaView>
   );
 }
@@ -275,35 +278,34 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   modalOverlay: {
-  flex: 1,
-  backgroundColor: "rgba(0,0,0,0.5)",
-  justifyContent: "center",
-  alignItems: "center",
-},
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
-modalBox: {
-  backgroundColor: "white",
-  width: "80%",
-  padding: 20,
-  borderRadius: 10,
-  alignItems: "center",
-  justifyContent: "center",
-},
+  modalBox: {
+    backgroundColor: "white",
+    width: "80%",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
-modalTitle: {
-  fontSize: 18,
-  fontWeight: "bold",
-  marginBottom: 20,
-},
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
 
-modalBtn: {
-  backgroundColor: "#820D0D",
-  paddingHorizontal: 20,
-  paddingVertical: 10,
-  borderRadius: 8,
-  color: "white",
-  fontWeight: "bold",
-  textAlign: "center",
-},
-
+  modalBtn: {
+    backgroundColor: "#820D0D",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
 });

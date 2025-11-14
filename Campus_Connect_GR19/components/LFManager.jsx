@@ -76,7 +76,7 @@ export default function LFManager() {
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Image source={item.photo} style={styles.cardImage} />
+      <Image source={{ uri: item.photo }} style={styles.cardImage} />
 
       <View style={styles.cardContent}>
         <View style={styles.titleRow}>
@@ -145,6 +145,7 @@ export default function LFManager() {
                 postedTime: item.postedTime,
                 additionalInfo:
                   item.additionalInfo || "No additional information provided.",
+                photo: item.photo,
               },
             })
           }
