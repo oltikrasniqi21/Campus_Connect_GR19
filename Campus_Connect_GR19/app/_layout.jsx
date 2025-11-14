@@ -70,10 +70,13 @@ function RootLayoutNav() {
         <Stack.Screen
           name="items/[id]"
           options={sharedHeaderOptions("Item Details")}
-        /><Stack.Screen
+        />
+        <Stack.Screen
           name="SavedFolder/[id]"
           options={sharedHeaderOptions("Folder")}
         />
+        <Stack.Screen name="(auth)/signup" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );
