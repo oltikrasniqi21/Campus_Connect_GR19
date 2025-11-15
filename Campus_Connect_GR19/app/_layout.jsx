@@ -7,6 +7,8 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Text, StyleSheet, Dimensions } from "react-native";
+import {AuthProvider} from "../context/AuthContext";
+
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -47,6 +49,7 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
+    <AuthProvider>    
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -79,6 +82,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
+    </AuthProvider>
   );
 }
 

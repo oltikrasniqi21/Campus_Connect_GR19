@@ -21,27 +21,24 @@ const { width } = Dimensions.get("window");
 
 export default function Profile() {
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [menuVisible, setMenuVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(width)).current;
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setCurrentUser(user);
-        setLoading(false);
-      } else {
-        router.replace("/login");
-      }
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
     });
 
     return () => unsubscribe();
   }, []);
 
   const handleSignOut = async () => {
-    await signOut(auth);
-    router.replace("/login");
+    try {
+      await signOut(auth);
+      router.replace("/login");
+    } catch (error) {
+      console.error("error", error);
+    }
   };
 
   const toggleMenu = () => {
@@ -64,7 +61,7 @@ export default function Profile() {
     }).start();
   }, [menuVisible]);
 
-  if (loading || !currentUser) {
+  if (!user) {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
         <ActivityIndicator size="large" color="#820D0D" />
