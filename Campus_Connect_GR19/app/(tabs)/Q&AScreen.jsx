@@ -7,9 +7,20 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import QnACard from "../../components/Homepage/Q&ACard";
+import { auth, db } from "../../firebase";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+} from "firebase/firestore";
 
 export default function QandAScreen() {
   const faqData = [
@@ -37,48 +48,74 @@ export default function QandAScreen() {
     setOpenFAQ(openFAQ === id ? null : id);
   };
 
-  const [questions, setQuestions] = useState([
-    {
-      id: 1,
-      question: "Kur fillon semestri i peste?",
-      answers: ["Ne shtator", "Pas pushimeve verore"],
-    },
-    {
-      id: 2,
-      question: "Ku gjendet bibloteka?",
-      answers: ["Ne katin e peste."],
-    },
-  ]);
-
+  const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState("");
   const [newAnswer, setNewAnswer] = useState("");
   const [selectedQuestionId, setSelectedQuestionId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState("");
   const [searchText, setSearchText] = useState("");
+  const [sortBy, setSortBy] = useState("date");
 
-  const hanldeAddQuestion = () => {
+  const handleUpvote = async (id, upvotes = []) => {
+    const questionRef = doc(db, "questions", id);
+    const userId = auth.currentUser.uid;
+
+    try {
+      if (upvotes.includes(userId)) {
+        await updateDoc(questionRef, {
+          upvotes: arrayRemove(userId),
+        });
+      } else {
+        await updateDoc(questionRef, {
+          upvotes: arrayUnion(userId),
+        });
+      }
+    } catch (error) {
+      console.log("Error upvoting question: ", error);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "questions"), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setQuestions(data);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const hanldeAddQuestion = async () => {
     if (newQuestion.trim() === "") return;
 
-    const newQ = {
-      id: questions.length + 1,
+    await addDoc(collection(db, "questions"), {
       question: newQuestion,
       answers: [],
-    };
+      userId: auth.currentUser.uid,
+      createdAt: Date.now(),
+      upvotes: [],
+    });
 
-    setQuestions([...questions, newQ]);
     setNewQuestion("");
   };
 
-  const handleAddAnswer = (id) => {
+  const handleAddAnswer = async (id) => {
     if (newAnswer.trim() === "") return;
 
-    const updated = questions.map((q) =>
-      q.id === id ? { ...q, answers: [...q.answers, newAnswer] } : q
-    );
-    setQuestions(updated);
-    setNewAnswer("");
-    setSelectedQuestionId(null);
+    try {
+      const questionRef = doc(db, "questions", id);
+      await updateDoc(questionRef, {
+        answers: arrayUnion(newAnswer),
+      });
+
+      setNewAnswer("");
+      setSelectedQuestionId(null);
+    } catch (error) {
+      console.log("Error adding answer: ", error);
+    }
   };
 
   const startEditing = (item) => {
@@ -86,28 +123,34 @@ export default function QandAScreen() {
     setEditingText(item.question);
   };
 
-  const saveEdit = () => {
-    if (editingText.trim() === "") {
+  const saveEdit = async () => {
+    if (!editingId || editingText.trim() === "") {
       return;
     }
 
-    const updated = questions.map((q) =>
-      q.id === editingId ? { ...q, question: editingText } : q
-    );
+    await updateDoc(doc(db, "questions", editingId), {
+      question: editingText,
+    });
 
-    setQuestions(updated);
     setEditingId(null);
     setEditingText("");
   };
 
-  const deleteQuestion = (id) => {
-    const updated = questions.filter((q) => q.id !== id);
-    setQuestions(updated);
+  const deleteQuestion = async (id) => {
+    await deleteDoc(doc(db, "questions", id));
   };
 
   const filteredQuestions = questions.filter((q) =>
     q.question.toLowerCase().includes(searchText.toLowerCase())
   );
+
+  const sortedQuestions = [...filteredQuestions].sort((a, b) => {
+    if (sortBy === "upvotes") {
+      return (b.upvotes?.length || 0) - (a.upvotes?.length || 0);
+    } else {
+      return b.createdAt - a.createdAt;
+    }
+  });
 
   const renderItem = ({ item }) => (
     <QnACard
@@ -123,6 +166,7 @@ export default function QandAScreen() {
       setEditingText={setEditingText}
       saveEdit={saveEdit}
       deleteQuestion={deleteQuestion}
+      handleUpvote={handleUpvote}
     />
   );
 
@@ -133,14 +177,34 @@ export default function QandAScreen() {
       <FlatList
         ListHeaderComponent={
           <>
-            <View>
+            <View style={styles.searchFilterRow}>
               <TextInput
-                style={styles.inputSimple}
+                style={[styles.inputSimple, { flex: 1 }]}
                 placeholder="Kerko pyetjen..."
                 placeholderTextColor="#777"
                 value={searchText}
                 onChangeText={setSearchText}
               />
+              <View style={styles.filterButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.filterBtn,
+                    sortBy === "date" && styles.filterBtnActive,
+                  ]}
+                  onPress={() => setSortBy("date")}
+                >
+                  <Text style={styles.filterText}>🕒 Data</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.filterBtn,
+                    sortBy === "upvotes" && styles.filterBtnActive,
+                  ]}
+                  onPress={() => setSortBy("upvotes")}
+                >
+                  <Text style={styles.filterText}>📈 Upvotes</Text>
+                </TouchableOpacity>
+              </View>
             </View>
             <Text style={styles.sectionHeader}>
               ❗ Pyetje te shpeshta (FAQ)
@@ -184,7 +248,7 @@ export default function QandAScreen() {
             </View>
           </>
         }
-        data={filteredQuestions}
+        data={sortedQuestions}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
@@ -276,7 +340,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
   },
-  
+
   searchBox: {
     marginBottom: 10,
   },
@@ -289,4 +353,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
     fontSize: 15,
   },
+  searchFilterRow: {
+    flexDirection: "row",
+    marginBottom: 10,
+    alignItems: "center",
+  },
+  filterButtons: { flexDirection: "row", marginLeft: 8 },
+  filterBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#D40000",
+    marginLeft: 4,
+  },
+  filterBtnActive: {
+    backgroundColor: "#D40000",
+  },
+  filterText: { color: "#000", fontWeight: "600" },
 });

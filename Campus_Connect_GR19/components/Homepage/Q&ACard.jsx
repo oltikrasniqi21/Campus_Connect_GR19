@@ -5,7 +5,10 @@ import {
   View,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from "react-native";
+import { auth } from "../../firebase";
+import { Timestamp } from "firebase/firestore";
 
 export default function QnACard({
   item,
@@ -20,10 +23,30 @@ export default function QnACard({
   setEditingText,
   saveEdit,
   deleteQuestion,
+  handleUpvote,
 }) {
+  const upvotes = item.upvotes || [];
+
+  const timeAgo = (Timestamp) => {
+    const now = new Date();
+    const posted = new Date(Timestamp);
+    const diff = Math.floor((now - posted) / 1000);
+
+    if (diff < 60) {
+      return `${diff} sekonda me pare`;
+    }
+    if (diff < 3600) {
+      return `${Math.floor(diff / 60)} minuta me pare`;
+    }
+    if (diff < 86400) {
+      return `${Math.floor(diff / 3600)} ore me pare`;
+    }
+    return `${Math.floor(diff / 86400)} dite me pare`;
+  };
   return (
     <View style={styles.qnaCard}>
       <Text style={styles.qnaQuestionText}>❓ {item.question}</Text>
+      <Text style={styles.qnaDate}>{timeAgo(item.createdAt)}</Text>
       <View style={styles.answersContainer}>
         <Text style={styles.answersTitle}>Përgjigjet:</Text>
         {item.answers.map((ans, index) => (
@@ -32,14 +55,48 @@ export default function QnACard({
           </Text>
         ))}
       </View>
-      <View style={styles.actionRow}>
-        <TouchableOpacity onPress={() => startEditing(item)}>
-          <Text style={styles.editBtn}>✏️ Edito</Text>
+      <View style={styles.actionsRow}>
+        <TouchableOpacity onPress={() => handleUpvote(item.id, upvotes)}>
+          <Text
+            style={{
+              color: upvotes.includes(auth.currentUser.uid)
+                ? "#D40000"
+                : "#555",
+            }}
+          >
+            👍 {upvotes.length}
+          </Text>
         </TouchableOpacity>
+        {item.userId === auth.currentUser?.uid && (
+          <>
+            <TouchableOpacity onPress={() => startEditing(item)}>
+              <Text style={[styles.editBtn, { marginLeft: 180 }]}>
+                ✏️ Edito
+              </Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => deleteQuestion(item.id)}>
-          <Text style={styles.deleteBtn}>🗑️ Fshi</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() =>
+                Alert.alert(
+                  "Konfirmo Fshirjen",
+                  "A je i sigurt qe deshiron te fshish kete pyetje?",
+                  [
+                    { text: "Jo", style: "cancel" },
+                    {
+                      text: "Po",
+                      style: "destructive",
+                      onPress: () => deleteQuestion(item.id),
+                    },
+                  ]
+                )
+              }
+            >
+              <Text style={[styles.deleteBtn, { marginLeft: 10 }]}>
+                🗑️ Fshi
+              </Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
       {selectedQuestionId === item.id ? (
         <View style={styles.answerInputBox}>
@@ -65,19 +122,19 @@ export default function QnACard({
           <Text style={styles.replyText}>Pergjigju</Text>
         </TouchableOpacity>
       )}
-      
-      {editingId === item.id ? (
-      <View style={styles.editBox}>
-        <TextInput
-          style={styles.inputSimple}
-          value={editingText}
-          onChangeText={setEditingText}
-        />
 
-        <TouchableOpacity style={styles.buttonPrimary} onPress={saveEdit}>
-          <Text style={styles.buttonText}>Ruaj</Text>
-        </TouchableOpacity>
-      </View>
+      {editingId === item.id ? (
+        <View style={styles.editBox}>
+          <TextInput
+            style={styles.inputSimple}
+            value={editingText}
+            onChangeText={setEditingText}
+          />
+
+          <TouchableOpacity style={styles.buttonPrimary} onPress={saveEdit}>
+            <Text style={styles.buttonText}>Ruaj</Text>
+          </TouchableOpacity>
+        </View>
       ) : null}
     </View>
   );
@@ -173,8 +230,7 @@ const styles = StyleSheet.create({
   },
   actionsRow: {
     flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: 12,
+    alignItems: "center",
     marginTop: 6,
   },
   editBtn: {
@@ -188,6 +244,11 @@ const styles = StyleSheet.create({
   editBox: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: 8,
+  },
+  qnaDate: {
+    fontSize: 12,
+    color: "#888",
     marginBottom: 8,
   },
 });
