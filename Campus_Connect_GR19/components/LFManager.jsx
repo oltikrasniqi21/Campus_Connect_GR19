@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -11,66 +11,105 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 
 const { width } = Dimensions.get("window");
 const CARD_MARGIN = 12;
-const CARD_WIDTH = (width - CARD_MARGIN * 3) / 2;
+const CARD_WIDTH = width - CARD_MARGIN * 2;
 
 export default function LFManager() {
   const router = useRouter();
+  const [items, setItems] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState(null);
 
-  const [items, setItems] = useState([
-    {
-      id: "1",
-      title: "Lost Calculator",
-      description: "Black Casio calculator last seen in FIEK Lab 3",
-      status: "Lost",
-      photo: require("../assets/images/calculator.jpg"),
-      location: "FIEK",
-      postedBy: "Riga",
-      postedTime: "2h ago",
-      pfp: require("../assets/images/pfp.png"),
-      additionalInfo: "Might have a blue sticker on the back.",
-    },
-    {
-      id: "2",
-      title: "Found Wallet",
-      description: "Brown wallet found near cafeteria",
-      status: "Found",
-      photo: require("../assets/images/wallet.jpg"),
-      location: "Cafeteria",
-      postedBy: "Rreze",
-      postedTime: "1h ago",
-      pfp: require("../assets/images/pfp1.jpeg"),
-      additionalInfo: "Contains ID and student card.",
-    },
-  ]);
+  const loadItems = async () => {
+    try {
+      const storedItems = await AsyncStorage.getItem("lfItems");
+      const loadedItems = storedItems ? JSON.parse(storedItems) : [];
+      setItems(loadedItems);
+    } catch (error) {
+      console.error("Error loading items:", error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadItems();
+    }, [])
+  );
+
+  const deleteItem = async (id) => {
+    setSelectedItem(id);
+    setModalVisible(true);
+  };
+
+  const handleModalClose = async () => {
+    try {
+      const updatedItems = items.filter((item) => item.id !== selectedItem);
+      await AsyncStorage.setItem("lfItems", JSON.stringify(updatedItems));
+      setItems(updatedItems);
+      setModalVisible(false);
+      setSelectedItem(null);
+    } catch (error) {
+      console.log("Error updating items:", error);
+    }
+  };
+
+  const handleModalCancel = () => {
+    setModalVisible(false);
+    setSelectedItem(null);
+  };
+  const renderEmpty = () => (
+    <View style={styles.emptyContainer}>
+      <Ionicons name="folder-open-outline" size={40} color="#820D0D" />
+      <Text style={styles.emptyTitle}>No items yet</Text>
+      <Text style={styles.emptySubtitle}>
+        Start by posting a lost or found item.
+      </Text>
+    </View>
+  );
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
-      <Image source={item.photo} style={styles.cardImage} />
+      <Image source={{ uri: item.photo }} style={styles.cardImage} />
 
       <View style={styles.cardContent}>
         <View style={styles.titleRow}>
           <Text style={styles.itemTitle} numberOfLines={1}>
             {item.title}
           </Text>
-          <View
-            style={[
-              styles.statusBadge,
-              { backgroundColor: item.status === "Lost" ? "#FFD6D6" : "#D8F5D2" },
-            ]}
-          >
-            <Text
+
+          <View style={styles.headerRight}>
+            <View
               style={[
-                styles.statusText,
-                { color: item.status === "Lost" ? "#C80000" : "#2E7D32" },
+                styles.statusBadge,
+                {
+                  backgroundColor:
+                    item.status === "Lost" ? "#FFD6D6" : "#D8F5D2",
+                },
               ]}
             >
-              {item.status}
-            </Text>
+              <Text
+                style={[
+                  styles.statusText,
+                  { color: item.status === "Lost" ? "#C80000" : "#2E7D32" },
+                ]}
+              >
+                {item.status}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => deleteItem(item.id)}
+              style={styles.deleteIcon}
+            >
+              <Ionicons name="trash-outline" size={18} color="#820D0D" />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -81,12 +120,16 @@ export default function LFManager() {
 
         <View style={styles.postedRow}>
           <View style={styles.profileContainer}>
-            {item.pfp && <Image source={item.pfp} style={styles.profileImage} />}
+            {item.pfp && (
+              <Image source={item.pfp} style={styles.profileImage} />
+            )}
             <Text style={styles.postedBy}>Posted by {item.postedBy}</Text>
           </View>
           <Text style={styles.postedTime}>{item.postedTime}</Text>
         </View>
-
+        <View
+          style={{ flexDirection: "row", justifyContent: "space-between" }}
+        ></View>
         <TouchableOpacity
           style={styles.moreButton}
           onPress={() =>
@@ -102,6 +145,7 @@ export default function LFManager() {
                 postedTime: item.postedTime,
                 additionalInfo:
                   item.additionalInfo || "No additional information provided.",
+                photo: item.photo,
               },
             })
           }
@@ -130,11 +174,37 @@ export default function LFManager() {
         data={items}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
+        numColumns={1}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: 10 }}
+        ListEmptyComponent={renderEmpty}
       />
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Delete this item?</Text>
+            <Text style={styles.modalSubtitle}>
+              This action cannot be undone.
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={handleModalCancel}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={handleModalClose}
+              >
+                <Text style={styles.deleteTextBtn}>Delete</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -157,11 +227,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   searchInput: { flex: 1, marginHorizontal: 8, color: "#333" },
-  row: {
-    justifyContent: "space-between",
-    paddingHorizontal: CARD_MARGIN,
-    marginBottom: CARD_MARGIN,
-  },
   card: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -171,10 +236,15 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
     elevation: 3,
-    width: CARD_WIDTH,
+
+    width: "92%",
+    alignSelf: "center",
+
+    marginVertical: 12,
+    paddingBottom: 10,
   },
-  cardImage: { width: "100%", height: 110, resizeMode: "cover" },
-  cardContent: { padding: 10 },
+  cardImage: { width: "100%", height: 250, resizeMode: "cover" },
+  cardContent: { padding: 14 },
   titleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -203,4 +273,94 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   moreText: { color: "#fff", fontWeight: "600", fontSize: 13 },
+  deleteButton: {
+    backgroundColor: "#b00000",
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalBox: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 14,
+    width: "80%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 6,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  cancelBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: "#e0e0e0",
+  },
+  cancelText: {
+    color: "#333",
+    fontWeight: "bold",
+  },
+  deleteBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: "#820D0D",
+  },
+  deleteTextBtn: {
+    color: "white",
+    fontWeight: "bold",
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  deleteIcon: {
+    backgroundColor: "rgba(255,255,255,0.9)",
+    padding: 6,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+  },
+  emptyContainer: {
+    marginTop: 80,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#820D0D",
+    marginTop: 10,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: "#555",
+    marginTop: 4,
+    textAlign: "center",
+  },
 });
