@@ -7,8 +7,20 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import QnACard from "../../components/Homepage/Q&ACard";
+import { auth, db } from "../../firebase";
+import {
+  addDoc,
+  collection,
+  onSnapshot,
+  deleteDoc,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+} from "firebase/firestore";
 
 export default function QandAScreen() {
   const faqData = [
@@ -36,85 +48,126 @@ export default function QandAScreen() {
     setOpenFAQ(openFAQ === id ? null : id);
   };
 
-  const [questions, setQuestions] = useState([
-    {
-      id: 1,
-      question: "Kur fillon semestri i peste?",
-      answers: ["Ne shtator", "Pas pushimeve verore"],
-    },
-    {
-      id: 2,
-      question: "Ku gjendet bibloteka?",
-      answers: ["Ne katin e peste."],
-    },
-  ]);
-
+  const [questions, setQuestions] = useState([]);
   const [newQuestion, setNewQuestion] = useState("");
   const [newAnswer, setNewAnswer] = useState("");
   const [selectedQuestionId, setSelectedQuestionId] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editingText, setEditingText] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const [sortBy, setSortBy] = useState("date");
 
-  const hanldeAddQuestion = () => {
+  const handleUpvote = async (id, upvotes = []) => {
+    const questionRef = doc(db, "questions", id);
+    const userId = auth.currentUser.uid;
+
+    try {
+      if (upvotes.includes(userId)) {
+        await updateDoc(questionRef, {
+          upvotes: arrayRemove(userId),
+        });
+      } else {
+        await updateDoc(questionRef, {
+          upvotes: arrayUnion(userId),
+        });
+      }
+    } catch (error) {
+      console.log("Error upvoting question: ", error);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "questions"), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setQuestions(data);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const hanldeAddQuestion = async () => {
     if (newQuestion.trim() === "") return;
 
-    const newQ = {
-      id: questions.length + 1,
+    await addDoc(collection(db, "questions"), {
       question: newQuestion,
       answers: [],
-    };
+      userId: auth.currentUser.uid,
+      createdAt: Date.now(),
+      upvotes: [],
+    });
 
-    setQuestions([...questions, newQ]);
     setNewQuestion("");
   };
 
-  const handleAddAnswer = (id) => {
+  const handleAddAnswer = async (id) => {
     if (newAnswer.trim() === "") return;
 
-    const updated = questions.map((q) =>
-      q.id === id ? { ...q, answers: [...q.answers, newAnswer] } : q
-    );
-    setQuestions(updated);
-    setNewAnswer("");
-    setSelectedQuestionId(null);
+    try {
+      const questionRef = doc(db, "questions", id);
+      await updateDoc(questionRef, {
+        answers: arrayUnion(newAnswer),
+      });
+
+      setNewAnswer("");
+      setSelectedQuestionId(null);
+    } catch (error) {
+      console.log("Error adding answer: ", error);
+    }
   };
 
+  const startEditing = (item) => {
+    setEditingId(item.id);
+    setEditingText(item.question);
+  };
+
+  const saveEdit = async () => {
+    if (!editingId || editingText.trim() === "") {
+      return;
+    }
+
+    await updateDoc(doc(db, "questions", editingId), {
+      question: editingText,
+    });
+
+    setEditingId(null);
+    setEditingText("");
+  };
+
+  const deleteQuestion = async (id) => {
+    await deleteDoc(doc(db, "questions", id));
+  };
+
+  const filteredQuestions = questions.filter((q) =>
+    q.question.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  const sortedQuestions = [...filteredQuestions].sort((a, b) => {
+    if (sortBy === "upvotes") {
+      return (b.upvotes?.length || 0) - (a.upvotes?.length || 0);
+    } else {
+      return b.createdAt - a.createdAt;
+    }
+  });
+
   const renderItem = ({ item }) => (
-    <View style={styles.qnaCard}>
-      <Text style={styles.qnaQuestionText}>❓ {item.question}</Text>
-
-      <View style={styles.answersContainer}>
-        <Text style={styles.answersTitle}>Përgjigjet:</Text>
-        {item.answers.map((ans, index) => (
-          <Text key={index} style={styles.qnaAnswerText}>
-            💬 {ans}
-          </Text>
-        ))}
-      </View>
-
-      {selectedQuestionId === item.id ? (
-        <View style={styles.answerInputBox}>
-          <TextInput
-            style={styles.inputSimple}
-            placeholder="Shkruaj Pergjigjen..."
-            placeholderTextColor="#777"
-            value={newAnswer}
-            onChangeText={setNewAnswer}
-          />
-          <TouchableOpacity
-            style={styles.buttonPrimary}
-            onPress={() => handleAddAnswer(item.id)}
-          >
-            <Text style={styles.buttonText}>Shto</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <TouchableOpacity
-          style={styles.replyButton}
-          onPress={() => setSelectedQuestionId(item.id)}
-        >
-          <Text style={styles.replyText}>Pergjigju</Text>
-        </TouchableOpacity>
-      )}
-    </View>
+    <QnACard
+      item={item}
+      selectedQuestionId={selectedQuestionId}
+      newAnswer={newAnswer}
+      setSelectedQuestionId={setSelectedQuestionId}
+      setNewAnswer={setNewAnswer}
+      handleAddAnswer={handleAddAnswer}
+      editingId={editingId}
+      editingText={editingText}
+      startEditing={startEditing}
+      setEditingText={setEditingText}
+      saveEdit={saveEdit}
+      deleteQuestion={deleteQuestion}
+      handleUpvote={handleUpvote}
+    />
   );
 
   return (
@@ -124,8 +177,35 @@ export default function QandAScreen() {
       <FlatList
         ListHeaderComponent={
           <>
-            
-
+            <View style={styles.searchFilterRow}>
+              <TextInput
+                style={[styles.inputSimple, { flex: 1 }]}
+                placeholder="Kerko pyetjen..."
+                placeholderTextColor="#777"
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+              <View style={styles.filterButtons}>
+                <TouchableOpacity
+                  style={[
+                    styles.filterBtn,
+                    sortBy === "date" && styles.filterBtnActive,
+                  ]}
+                  onPress={() => setSortBy("date")}
+                >
+                  <Text style={styles.filterText}>🕒 Data</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.filterBtn,
+                    sortBy === "upvotes" && styles.filterBtnActive,
+                  ]}
+                  onPress={() => setSortBy("upvotes")}
+                >
+                  <Text style={styles.filterText}>📈 Upvotes</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
             <Text style={styles.sectionHeader}>
               ❗ Pyetje te shpeshta (FAQ)
             </Text>
@@ -168,7 +248,7 @@ export default function QandAScreen() {
             </View>
           </>
         }
-        data={questions}
+        data={sortedQuestions}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
@@ -182,13 +262,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: "#F5F6FA",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#820000",
-    textAlign: "center",
-    marginBottom: 20,
   },
   sectionHeader: {
     fontSize: 18,
@@ -240,66 +313,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  qnaCard: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 15,
-    marginVertical: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  qnaQuestionText: {
-    fontSize: 16,
-    fontWeight: "800",
-    color: "#222",
-    marginBottom: 10,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
-  },
-
-  answersContainer: {
-    backgroundColor: "#F9F9F9",
-    borderRadius: 8,
-    padding: 10,
-    marginTop: 5,
-    marginBottom: 10,
-  },
-  answersTitle: {
-    fontSize: 13,
-    fontWeight: "bold",
-    color: "#820000",
-    marginBottom: 5,
-    borderBottomWidth: 1,
-    borderBottomColor: "#EDEDED",
-    paddingBottom: 3,
-  },
-  qnaAnswerText: {
-    fontSize: 14,
-    color: "#555",
-    backgroundColor: "#fff",
-    borderRadius: 6,
-    padding: 8,
-    marginTop: 5,
-    lineHeight: 20,
-    borderLeftWidth: 3,
-    borderLeftColor: "#820000",
-  },
-
   addQuestionBox: {
     flexDirection: "row",
     marginBottom: 10,
     marginTop: 10,
-  },
-  answerInputBox: {
-    flexDirection: "row",
-    marginTop: 10,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: "#F0F0F0",
   },
   inputSimple: {
     flex: 1,
@@ -324,16 +341,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  replyButton: {
-    marginTop: 10,
-    alignSelf: "flex-end",
-    paddingHorizontal: 8,
+  searchBox: {
+    marginBottom: 10,
   },
-  replyText: {
-    color: "#820000",
-    fontWeight: "600",
-    fontSize: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#820000",
+  inputSimple: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 10,
+    backgroundColor: "#fff",
+    fontSize: 15,
   },
+  searchFilterRow: {
+    flexDirection: "row",
+    marginBottom: 10,
+    alignItems: "center",
+  },
+  filterButtons: { flexDirection: "row", marginLeft: 8 },
+  filterBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#D40000",
+    marginLeft: 4,
+  },
+  filterBtnActive: {
+    backgroundColor: "#D40000",
+  },
+  filterText: { color: "#000", fontWeight: "600" },
 });

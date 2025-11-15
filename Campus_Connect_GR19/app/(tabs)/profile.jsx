@@ -10,16 +10,39 @@ import {
   Animated,
   Dimensions,
   Easing,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { auth } from "../../firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
 const { width } = Dimensions.get("window");
 
 export default function Profile() {
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [menuVisible, setMenuVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(width)).current;
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        setCurrentUser(user);
+        setLoading(false);
+      } else {
+        router.replace("/login");
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.replace("/login");
+  };
 
   const toggleMenu = () => {
     setMenuVisible((prev) => !prev);
@@ -41,23 +64,32 @@ export default function Profile() {
     }).start();
   }, [menuVisible]);
 
+  if (loading || !currentUser) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color="#820D0D" />
+        <Text style={{ marginTop: 10 }}>Loading user...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-
       <View style={styles.profileSection}>
         <Image
           source={{ uri: "https://i.pravatar.cc/150?img=12" }}
           style={styles.avatar}
         />
         <View style={styles.nameRow}>
-          <Text style={styles.name}>Filan Fisteku</Text>
+          <Text style={styles.name}>{currentUser.email}</Text>
           <TouchableOpacity style={styles.editIcon}>
             <Ionicons name="pencil" size={20} color="#D40000" />
           </TouchableOpacity>
         </View>
-        <Text style={styles.subtitle}>budalla ma i madh</Text>
+        <Text style={styles.subtitle}>
+          Student Ne Fakultetin e Inxhinierise Kompjuterike
+        </Text>
       </View>
-
 
       <ScrollView
         contentContainerStyle={styles.postsContainer}
@@ -67,12 +99,36 @@ export default function Profile() {
 
         <View style={styles.gridContainer}>
           {[
-            { id: 1, title: "ID i humbur", image: "https://picsum.photos/200/200?random=1" },
-            { id: 2, title: "Study Group", image: "https://picsum.photos/200/200?random=2" },
-            { id: 3, title: "Event Per Data Security", image: "https://picsum.photos/200/200?random=3" },
-            { id: 4, title: "This is the best University Ever o My gOD!", image: "https://picsum.photos/200/200?random=4" },
-            { id: 5, title: "Football Game", image: "https://picsum.photos/200/200?random=5" },
-            { id: 6, title: "Group Study", image: "https://picsum.photos/200/200?random=6" },
+            {
+              id: 1,
+              title: "ID i humbur",
+              image: "https://picsum.photos/200/200?random=1",
+            },
+            {
+              id: 2,
+              title: "Study Group",
+              image: "https://picsum.photos/200/200?random=2",
+            },
+            {
+              id: 3,
+              title: "Event Per Data Security",
+              image: "https://picsum.photos/200/200?random=3",
+            },
+            {
+              id: 4,
+              title: "This is the best University Ever o My gOD!",
+              image: "https://picsum.photos/200/200?random=4",
+            },
+            {
+              id: 5,
+              title: "Mbledhemi per loje Volleyboll",
+              image: "https://picsum.photos/200/200?random=5",
+            },
+            {
+              id: 6,
+              title: "Trajnim ne UI/UX",
+              image: "https://picsum.photos/200/200?random=6",
+            },
           ].map((post) => (
             <TouchableOpacity key={post.id} style={styles.postItem}>
               <Image source={{ uri: post.image }} style={styles.postImage} />
@@ -83,7 +139,6 @@ export default function Profile() {
           ))}
         </View>
       </ScrollView>
-
 
       <Modal visible={menuVisible} transparent animationType="none">
         <TouchableOpacity
@@ -99,7 +154,6 @@ export default function Profile() {
           >
             <Text style={styles.menuTitle}>Menu</Text>
 
-
             <TouchableOpacity
               style={styles.menuItem}
               onPress={() => {
@@ -111,7 +165,6 @@ export default function Profile() {
               <Text style={styles.menuText}>Saved</Text>
             </TouchableOpacity>
 
-
             <TouchableOpacity style={styles.menuItem}>
               <Feather name="edit" size={22} color="#fff" />
               <Text style={styles.menuText}>Edit Account Details</Text>
@@ -119,8 +172,10 @@ export default function Profile() {
 
             <View style={styles.spacer} />
 
-
-            <TouchableOpacity style={styles.logoutButton}>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={handleSignOut}
+            >
               <Ionicons name="log-out-outline" size={22} color="#fff" />
               <Text style={styles.menuText}>Log Out</Text>
             </TouchableOpacity>

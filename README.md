@@ -1,59 +1,58 @@
 # Campus Connect
 
-> A modern mobile application built with **React Native + Expo** to keep university students connected — discover campus events, report lost or found items, post questions, and manage your personal campus life from one place.
+> Një aplikacion modern mobil i ndërtuar me **React Native + Expo** për të mbajtur studentët e universitetit të lidhur. Zbulo ngjarjet në kampus, raporto sendet e humbura ose të gjetura, postoni pyetje dhe menaxhoni jetën tuaj personale në kampus nga një vend i vetëm.
 
 ---
 
 ## Overview
 
-**Campus Connect** is designed for students to interact, share updates, and stay informed about everything happening on campus.  
-The app integrates **event discovery**, **lost & found management**, **Q&A discussions**, and **profile personalization** — all inside a friendly and consistent UI built for mobile and web (Expo Web).
+**Campus Connect** është dizajnuar për studentët që të ndërveprojnë, të ndajnë informacion dhe të jenë të informuar për gjithçka që ndodh në kampus.  
+Aplikacioni integron **zbulimin e ngjarjeve**, **menaxhimin e sendave të humbura dhe të gjetura**, **pyetje & përgjigje** dhe **personalizimin e profilit** - të gjitha brenda një ndërfaqeje miqësore dhe të qëndrueshme të ndërtuar për mobile dhe web (Expo Web).
 
 ---
 
 ## Features
 
 ### Home
-- View **current campus events** (with title, date, and location).  
-- Tap **See More** for detailed info and event description.  
-- Dynamic list of ongoing or upcoming events.
+- Shiko **ngjarjet aktuale në kampus** (me titull, datë dhe vendndodhje)  
+- Kliko **Shiko më shumë** për informacion të detajuar dhe përshkrim të ngjarjes  
+- Listë dinamike e ngjarjeve në zhvillim ose të ardhshme
 
 ### Lost & Found
-- Browse all reported **Lost** and **Found** items.  
-- Filter by status, view item details, or post a new report.  
-- Floating **“+” button** allows quick access to the post form.
+- Shfleto të gjitha sendet e raportuara si **Humbur** ose **Gjetur**  
+- Filtroni sipas statusit, shikoni detajet e sendit ose postoni një raport të ri  
+- Butoni lëvizës **“+”** lejon akses të shpejtë në formën e postimit
 
 ### Saved Items
-- Keep track of your **favorite or important items**.  
-- Items saved appear here.  
-- Enables users to revisit and follow updates on saved items.  
-- Organize posts in folders.
+- Mbaj gjurmët e sendeve tuaja **të preferuara ose të rëndësishme**  
+- Sendet e ruajtura shfaqen këtu  
+- Lejon përdoruesit të rikthehen dhe të ndjekin përditësimet e sendeve të ruajtura  
+- Organizoni postimet në dosje
 
 ### Post Item
-- Create and submit new Lost or Found posts.  
-- Fill in fields like title, description, location, and additional info.  
+- Krijoni dhe dorëzoni postime të reja për sendet e **Humbura** ose **Gjetura**  
+- Mbushni fushat si titulli, përshkrimi, vendndodhja dhe informacion shtesë  
 
 ### Q&A
-- Ask or answer campus-related questions.  
-- Join academic or community discussions (feature in progress).
+- Bëni pyetje ose jepni përgjigje për çështje të lidhura me kampusin  
+- Bashkohuni në diskutime akademike ose komunitare (karakteristikë në zhvillim)
 
 ### Profile
-- Manage your personal info, profile photo, and bio.  
-- View all your posted items and events.  
-- Edit your details directly from the profile screen.
-- Tap menu icon for more funcionality features like "log out", "saved", "change account details" etc.
+- Menaxhoni informacionin personal, foton e profilit dhe biografinë  
+- Shikoni të gjitha postimet dhe ngjarjet tuaja  
+- Ndryshoni të dhënat tuaja direkt nga ekrani i profilit  
+- Kliko ikonën e menusë për më shumë funksionalitete si "dalja", "të ruajturat", "ndrysho detajet e llogarisë" etj.
 
 ## Future Enhancements
 
-- Push notifications for new events and found items  
-- Map view for event and item locations  
-- Upload a photo directly from your device before posting.
+- Njoftime push për ngjarje të reja dhe sende të gjetura  
+- Pamje me hartë për vendndodhjet e ngjarjeve dhe sendeve  
+- Ngarko një foto direkt nga pajisja para se të postosh
 
-## Contributors
+## Antarët e grupit
 
 - Riga Zubaku
 - Rreze Ejupi
 - Olti Krasniqi
 - Bleron Baftiu
 - Valmir Mustafa
----

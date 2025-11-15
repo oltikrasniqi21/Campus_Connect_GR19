@@ -9,9 +9,11 @@ import {
   Image,
   Platform,
   StatusBar,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function PostLFItem() {
   const router = useRouter();
@@ -22,8 +24,35 @@ export default function PostLFItem() {
   const [additionalInfo, setAdditionalInfo] = useState("");
   const [photo, setPhoto] = useState(null);
 
-  const handleSubmit = () => {
-    if (!title.trim() || !postType.trim()) return;
+  const [error, setError] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!postType.trim()) {
+      setError("Please select Lost or Found");
+      return;
+    }
+    if (!title.trim()) {
+      setError("Please enter a title for the item.");
+      return;
+    }
+    if (!description.trim()) {
+      setError("Please enter a description for the item.");
+      return;
+    }
+    if (title.trim().length < 5) {
+      setError("Title must be at least 5 characters long.");
+      return;
+    }
+    if (!location.trim()) {
+      setError("Please enter the location where the item was lost or found.");
+      return;
+    }
+    if (!additionalInfo.trim()) {
+      setError("Please provide additional information about the item.");
+      return;
+    }
+    setError("");
 
     const newItem = {
       id: Date.now().toString(),
@@ -34,11 +63,22 @@ export default function PostLFItem() {
       status: postType,
       postedBy: "Current User",
       postedTime: "Just now",
-      photo: photo || require("../assets/images/idCard.jpg"),
-      pfp: require("../assets/images/pfp.png"),
+      photo: photo || "https://i.imgur.com/2nCt3Sbl.jpg",
     };
 
-    router.back(); 
+    try {
+      const stored = await AsyncStorage.getItem("lfItems");
+      const items = stored ? JSON.parse(stored) : [];
+      items.push(newItem);
+      await AsyncStorage.setItem("lfItems", JSON.stringify(items));
+    } catch (err) {
+      console.error("Error saving item:", err);
+    }
+    setModalVisible(true);
+  };
+  const closeModal = () => {
+    setModalVisible(false);
+    router.push("/(tabs)/LostFound");
   };
 
   return (
@@ -51,7 +91,10 @@ export default function PostLFItem() {
 
         <View style={styles.postTypeContainer}>
           <TouchableOpacity
-            style={[styles.typeButton, postType === "Lost" && styles.activeLost]}
+            style={[
+              styles.typeButton,
+              postType === "Lost" && styles.activeLost,
+            ]}
             onPress={() => setPostType("Lost")}
           >
             <Text
@@ -65,7 +108,10 @@ export default function PostLFItem() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.typeButton, postType === "Found" && styles.activeFound]}
+            style={[
+              styles.typeButton,
+              postType === "Found" && styles.activeFound,
+            ]}
             onPress={() => setPostType("Found")}
           >
             <Text
@@ -78,6 +124,10 @@ export default function PostLFItem() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        {error ? (
+          <Text style={{ color: "red", marginBottom: 10 }}>{error}</Text>
+        ) : null}
 
         <Text style={styles.label}>Title</Text>
         <TextInput
@@ -130,6 +180,18 @@ export default function PostLFItem() {
 
         <View style={{ height: 50 }} />
       </ScrollView>
+
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Item posted successfully!</Text>
+
+            <TouchableOpacity onPress={closeModal}>
+              <Text style={styles.modalBtn}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -214,5 +276,36 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalBox: {
+    backgroundColor: "white",
+    width: "80%",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 20,
+  },
+
+  modalBtn: {
+    backgroundColor: "#820D0D",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    color: "white",
+    fontWeight: "bold",
+    textAlign: "center",
   },
 });

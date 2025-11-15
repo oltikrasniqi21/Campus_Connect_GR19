@@ -1,7 +1,7 @@
-import { TouchableOpacity, StyleSheet, Text, View } from 'react-native'
+import { TouchableOpacity, StyleSheet,Text, View } from 'react-native'
 import React from 'react'
 import { Entypo, Ionicons } from '@expo/vector-icons'
-
+import { Link } from 'expo-router'
 import { Dimensions } from "react-native";
 const { width } = Dimensions.get("window");
 
@@ -13,14 +13,16 @@ export function Flashcard({title, date, time, location}){
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.info}>{date} <Text style={{fontWeight:'bold'}}>{time}</Text>{'\n'}Lokacioni: {location} </Text>
         </View>
-        <View style={[styles.section, {alignItems:'flex-end'}]}>
-            <TouchableOpacity style={styles.seeMoreButton} activeOpacity={0.7} >
-                
-                <Text style={styles.seeMoreText}>See More</Text>
-                <Entypo name="chevron-right" size={width * 0.085} color="#fcfcfc" />
-            </TouchableOpacity>
-        </View>
 
+            
+        <TouchableOpacity activeOpacity={0.7} >
+            <Link href={'/EventDetails'} style={styles.seeMoreLink}>
+                <View style={styles.seeMoreButton}>
+                    <Text style={styles.seeMoreText}>See More</Text>
+                    <Entypo name="chevron-right" size={width * 0.085} color="#fcfcfc" />
+                </View>
+            </Link> 
+        </TouchableOpacity>   
     </View>
   );
 }
@@ -30,7 +32,7 @@ const styles = StyleSheet.create({
     container:{
         width:'100%',
         height: width * 0.25,
-        backgroundColor:'#FCF9EA',
+        backgroundColor:'#efefefff',
         borderRadius:20,
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 5 },
@@ -40,6 +42,7 @@ const styles = StyleSheet.create({
         justifyContent:'space-between',
         alignItems:'center',
         padding:10,
+        marginBottom:15,
 
     },
     section:{
@@ -51,28 +54,30 @@ const styles = StyleSheet.create({
     title:{
         fontSize: width * 0.06,
         fontWeight:'bold',
-        fontFamily:'SpaceMono',
+        fontFamily:'Montserrat',
     },
     info:{
         fontSize:width * 0.035,
-        fontFamily:'SpaceMono',
+        fontFamily:'Montserrat',
     },
     seeMoreButton:{
         flexDirection:'row', 
         alignItems:'center',
-        justifyContent:"center",
+        justifyContent:"flex-end",
         backgroundColor:'#820d0d',
         borderRadius: width * 0.06,
         width:width * 0.33,
         height:width * 0.10,
-        paddingRight:width * 0.01,
     },
-     seeMoreText: {
-    fontSize: width * 0.045, 
-    fontFamily: "SpaceMono",
-    color: "#fcfcfc",
-    fontWeight: "500",
-    marginRight: width * -0.01, 
-    marginBottom: width * 0.01,
-  },
+    seeMoreLink:{
+      paddingHorizontal: 5, 
+    },
+    seeMoreText: {
+        fontSize: width * 0.045, 
+        fontFamily: "Montserrat",
+        color: "#fcfcfc",
+        fontWeight: "500",
+        marginRight: width * -0.01, 
+        marginBottom: width * 0.01,
+    },
 })

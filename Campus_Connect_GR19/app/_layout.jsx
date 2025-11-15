@@ -18,6 +18,7 @@ export default function RootLayout() {
   const [loaded, error] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
     ...FontAwesome.font,
+    Montserrat: require("../assets/fonts/Montserrat.ttf"),
   });
 
   useEffect(() => {
@@ -58,10 +59,24 @@ function RootLayoutNav() {
           name="SavedPosts"
           options={sharedHeaderOptions("Saved Posts")}
         />
-      <Stack.Screen
-  name="items/[id]"
-  options={sharedHeaderOptions("Lost & Found")} 
-    />
+        <Stack.Screen
+          name="AddPost"
+          options={sharedHeaderOptions("Add New Event")}
+        />
+        <Stack.Screen
+          name="EventDetails"
+          options={sharedHeaderOptions("Event Details")}
+        />
+        <Stack.Screen
+          name="items/[id]"
+          options={sharedHeaderOptions("Item Details")}
+        />
+        <Stack.Screen
+          name="SavedFolder/[id]"
+          options={sharedHeaderOptions("Folder")}
+        />
+        <Stack.Screen name="(auth)/signup" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
   );
