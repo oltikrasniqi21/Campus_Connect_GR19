@@ -23,6 +23,9 @@ export default function Profile() {
   const router = useRouter();
   const slideAnim = useRef(new Animated.Value(width)).current;
   const [user, setUser] = useState(null);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const currentUser = auth.currentUser;
+
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {

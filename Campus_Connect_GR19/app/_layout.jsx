@@ -7,8 +7,7 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Text, StyleSheet, Dimensions } from "react-native";
-import {AuthProvider} from "../context/AuthContext";
-
+import { AuthProvider } from "../context/AuthContext";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",

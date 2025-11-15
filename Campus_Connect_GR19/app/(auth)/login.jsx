@@ -7,7 +7,7 @@ import {
   Image,
   ScrollView,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { router } from "expo-router";
 import {
   signInWithEmailAndPassword,
@@ -15,12 +15,12 @@ import {
   signInWithCredential,
 } from "firebase/auth";
 import { auth } from "../../firebase";
+import { AntDesign } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import * as Google from "expo-auth-session/providers/google";
 import * as AuthSession from "expo-auth-session";
 
 WebBrowser.maybeCompleteAuthSession();
-console.log(AuthSession.makeRedirectUri({ useProxy: true }));
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -28,23 +28,49 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    expoClientId:
-      "910312044916-6vd8r69u5kcj83dfk2d7kej0e82kp8t4.apps.googleusercontent.com",
-    webClientId:
-      "910312044916-6vd8r69u5kcj83dfk2d7kej0e82kp8t4.apps.googleusercontent.com",
-    iosClientId:
-      "910312044916-asc4n33ejj8otsfee7m7tbt6d5jhuj3b.apps.googleusercontent.com",
+ const redirectUri = AuthSession.makeRedirectUri({
+    useProxy: true,
   });
 
-  useEffect(() => {
-    if (response?.type === "success") {
-      const { id_token } = response.params;
-      const credential = GoogleAuthProvider.credential(id_token);
-      signInWithCredential(auth, credential)
-        .then(() => router.push("/"))
-        .catch((err) => setError(err.message));
-    }
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId:
+      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+    expoClientId:
+      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+    iosClientId:
+      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+    androidClientId:
+      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+    responseType: "id_token",
+    scopes: ["profile", "email"],
+    redirectUri,
+  });
+
+
+useEffect(() => {
+    const handleResponse = async () => {
+      if (response?.type === "success") {
+        try {
+          setLoading(true);
+          const { id_token } = response.params;
+          if (!id_token) {
+            setError("Google authentication failed: missing ID token");
+            return;
+          }
+
+          const credential = GoogleAuthProvider.credential(id_token);
+          await signInWithCredential(auth, credential);
+          router.push("/");
+        } catch (err) {
+          console.error(err);
+          setError(err.message || "Failed to sign in with Google");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    handleResponse();
   }, [response]);
 
   const validateInputs = () => {
