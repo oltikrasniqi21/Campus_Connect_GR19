@@ -26,7 +26,6 @@ export default function Profile() {
   const [menuVisible, setMenuVisible] = useState(false);
   const currentUser = auth.currentUser;
 
-
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((currentUser) => {
       setUser(currentUser);
@@ -77,9 +76,12 @@ export default function Profile() {
     <View style={styles.container}>
       <View style={styles.profileSection}>
         <Image
-          source={{ uri: "https://i.pravatar.cc/150?img=12" }}
+          source={{
+            uri: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+          }}
           style={styles.avatar}
         />
+
         <View style={styles.nameRow}>
           <Text style={styles.name}>{currentUser.email}</Text>
           <TouchableOpacity style={styles.editIcon}>

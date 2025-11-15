@@ -8,7 +8,7 @@ export default function LostFound() {
       <LFManager />
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => router.push("/PostLFItem")}
+        onPress={() => router.push("/postLFItem")}
       >
         <Text style={styles.addButtonText}>＋</Text>
       </TouchableOpacity>

@@ -54,7 +54,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
         <Stack.Screen
-          name="PostLFItem"
+          name="postLFItem"
           options={sharedHeaderOptions("Post Item")}
         />
         <Stack.Screen

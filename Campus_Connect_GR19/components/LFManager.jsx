@@ -16,6 +16,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { auth, db } from "../firebase";
+import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 
 const { width } = Dimensions.get("window");
 const CARD_MARGIN = 12;
@@ -27,43 +29,57 @@ export default function LFManager() {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const loadItems = async () => {
-    try {
-      const storedItems = await AsyncStorage.getItem("lfItems");
-      const loadedItems = storedItems ? JSON.parse(storedItems) : [];
-      setItems(loadedItems);
-    } catch (error) {
-      console.error("Error loading items:", error);
-    }
+  const timeAgo = (timestamp) => {
+    if (!timestamp) return "";
+
+    const date = timestamp.toDate();
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000);
+
+    if (diff < 60) return `${diff} sec ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    if (diff < 172800) return "Yesterday";
+
+    return date.toLocaleDateString();
   };
 
   useFocusEffect(
     useCallback(() => {
-      loadItems();
+      const unsub = onSnapshot(
+        collection(db, "lost_found_items"),
+        (snapshot) => {
+          const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+          setItems(data);
+        }
+      );
+
+      return () => unsub();
     }, [])
   );
 
-  const deleteItem = async (id) => {
+  const deleteItem = (id) => {
     setSelectedItem(id);
     setModalVisible(true);
   };
 
-  const handleModalClose = async () => {
-    try {
-      const updatedItems = items.filter((item) => item.id !== selectedItem);
-      await AsyncStorage.setItem("lfItems", JSON.stringify(updatedItems));
-      setItems(updatedItems);
-      setModalVisible(false);
-      setSelectedItem(null);
-    } catch (error) {
-      console.log("Error updating items:", error);
-    }
+  const confirmDelete = async () => {
+    if (!selectedItem) return;
+
+    await deleteDoc(doc(db, "lost_found_items", selectedItem));
+
+    setModalVisible(false);
+    setSelectedItem(null);
   };
 
   const handleModalCancel = () => {
     setModalVisible(false);
     setSelectedItem(null);
   };
+  const handleModalClose = () => {
+    confirmDelete();
+  };
+
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="folder-open-outline" size={40} color="#820D0D" />
@@ -121,11 +137,11 @@ export default function LFManager() {
         <View style={styles.postedRow}>
           <View style={styles.profileContainer}>
             {item.pfp && (
-              <Image source={item.pfp} style={styles.profileImage} />
+              <Image source={{ uri: item.pfp }} style={styles.profileImage} />
             )}
             <Text style={styles.postedBy}>Posted by {item.postedBy}</Text>
           </View>
-          <Text style={styles.postedTime}>{item.postedTime}</Text>
+          <Text style={styles.postedTime}>{timeAgo(item.postedTime)}</Text>
         </View>
         <View
           style={{ flexDirection: "row", justifyContent: "space-between" }}
@@ -142,10 +158,11 @@ export default function LFManager() {
                 status: item.status,
                 location: item.location,
                 postedBy: item.postedBy,
-                postedTime: item.postedTime,
+                postedTime: timeAgo(item.postedTime),
                 additionalInfo:
                   item.additionalInfo || "No additional information provided.",
                 photo: item.photo,
+                pfp: item.pfp || null,
               },
             })
           }

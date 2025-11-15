@@ -56,10 +56,7 @@ export default function ItemDetails() {
         </View>
 
         <View style={styles.postedByContainer}>
-          <Image
-            source={require("../../assets/images/pfp.png")}
-            style={styles.profileImage}
-          />
+          <Image source={{ uri: params.pfp }} style={styles.profileImage} />
           <View>
             <Text style={styles.postedByText}>Posted by {params.postedBy}</Text>
             <Text style={styles.postedTime}>{params.postedTime}</Text>

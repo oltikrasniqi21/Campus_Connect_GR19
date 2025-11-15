@@ -13,7 +13,13 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { auth, db } from "../firebase";
+import {
+  addDoc,
+  collection,
+  Timestamp,
+} from "firebase/firestore";
+
 
 export default function PostLFItem() {
   const router = useRouter();
@@ -54,28 +60,27 @@ export default function PostLFItem() {
     }
     setError("");
 
-    const newItem = {
-      id: Date.now().toString(),
-      title,
-      description,
-      location,
-      additionalInfo,
-      status: postType,
-      postedBy: "Current User",
-      postedTime: "Just now",
-      photo: photo || "https://i.imgur.com/2nCt3Sbl.jpg",
-    };
-
     try {
-      const stored = await AsyncStorage.getItem("lfItems");
-      const items = stored ? JSON.parse(stored) : [];
-      items.push(newItem);
-      await AsyncStorage.setItem("lfItems", JSON.stringify(items));
+      await addDoc(collection(db, "lost_found_items"), {
+        title,
+        description,
+        location,
+        additionalInfo,
+        status: postType,
+        userId: auth.currentUser.uid,
+        postedBy: auth.currentUser.email,
+        pfp: auth.currentUser.photoURL || `https://i.pravatar.cc/150?u=${auth.currentUser.uid}`,
+        postedTime: Timestamp.now(),
+        photo: photo || "https://i.imgur.com/2nCt3Sbl.jpg",
+      });
+
+      setModalVisible(true);
     } catch (err) {
       console.error("Error saving item:", err);
+      setError("Something went wrong");
     }
-    setModalVisible(true);
   };
+
   const closeModal = () => {
     setModalVisible(false);
     router.push("/(tabs)/LostFound");
