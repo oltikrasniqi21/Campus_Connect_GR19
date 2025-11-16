@@ -29,11 +29,10 @@ export default function Profile() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [posts, setPosts] = useState([]);
   const [lfPosts, setLfPosts] = useState([]);
-  const [tab, setTab] = useState("events"); // "events" or "lf"
+  const [tab, setTab] = useState("events");
 
   const currentUser = auth.currentUser;
 
-  /** FETCH USER DATA **/
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
@@ -57,7 +56,6 @@ export default function Profile() {
     return () => unsubscribe();
   }, []);
 
-  /** FETCH EVENTS **/
   useEffect(() => {
     if (!user) return;
     const postsRef = collection(db, "events");
@@ -69,7 +67,6 @@ export default function Profile() {
     return unsubscribePosts;
   }, [user]);
 
-  /** FETCH LOST & FOUND POSTS **/
   useEffect(() => {
     if (!user) return;
     const lfRef = collection(db, "lost_found_items");
@@ -81,7 +78,6 @@ export default function Profile() {
     return unsubscribeLf;
   }, [user]);
 
-  /** SIGN OUT **/
   const handleSignOut = async () => {
     try {
       await signOut(auth);
@@ -91,7 +87,6 @@ export default function Profile() {
     }
   };
 
-  /** MENU TOGGLE **/
   const toggleMenu = () => setMenuVisible((prev) => !prev);
   useEffect(() => {
     global.toggleProfileMenu = toggleMenu;
@@ -116,7 +111,6 @@ export default function Profile() {
     );
   }
 
-  /** RENDER POSTS GRID **/
   const renderGrid = (data, type) => {
     if (data.length === 0) {
       return (
@@ -229,11 +223,10 @@ export default function Profile() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.name}>{currentUser.email}</Text>
+        <Text style={styles.email} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} textAlign="center">{currentUser.email}</Text>
         <Text style={styles.subtitle}>{user.bio || "no bio yet"}</Text>
       </View>
 
-      {/* TABS */}
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[
@@ -277,7 +270,6 @@ export default function Profile() {
         {tab === "events" ? renderGrid(posts, "events") : renderGrid(lfPosts, "lf")}
       </ScrollView>
 
-      {/* MENU */}
       <Modal visible={menuVisible} transparent animationType="none">
         <TouchableOpacity
           style={styles.overlay}
@@ -365,6 +357,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#656565",
+    textAlign: "center",
   },
 
   editIcon: {
@@ -481,5 +474,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
+  },
+
+  email: {
+  fontSize: 16,
+  color: "#898580",
+  marginTop: 4,
   },
 });

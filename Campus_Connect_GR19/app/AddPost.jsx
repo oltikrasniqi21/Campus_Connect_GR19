@@ -39,7 +39,6 @@ export default function AddEvent() {
   const [modalMessage, setModalMessage] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // 🔥 New Random Image Generator (picsum.photos)
   const generateRandomEventImage = () => {
     const width = 400;
     const height = 300;
@@ -48,7 +47,6 @@ export default function AddEvent() {
     return `https://picsum.photos/${width}/${height}?random=${seed}`;
   };
 
-  // Safe date handling function
   const handleDateChange = (dateString) => {
     const newDate = new Date(dateString);
     
@@ -61,7 +59,6 @@ export default function AddEvent() {
     setError("");
   };
 
-  // Safe time handling function
   const handleTimeChange = (timeString) => {
     const [hours, minutes] = timeString.split(":");
     const newTime = new Date(eventTime);
@@ -116,7 +113,7 @@ export default function AddEvent() {
       if (!file) return;
       
       if (file.size > 1024 * 1024) {
-        Alert.alert("Error", "Please select an image smaller than 1MB");
+        Alert.alert("Error", "Ju lutem zgjidhni nje imazh me te vogel se 1MB");
         return;
       }
       
@@ -130,13 +127,13 @@ export default function AddEvent() {
           setUploadingImage(false);
         };
         reader.onerror = () => {
-          Alert.alert("Error", "Failed to process image");
+          Alert.alert("Error", "Procesimi i imazhit deshtoi");
           setUploadingImage(false);
         };
         reader.readAsDataURL(file);
       } catch (error) {
         console.error("Error:", error);
-        Alert.alert("Error", "Failed to process image");
+        Alert.alert("Error", "Procesimi i imazhit deshtoi");
         setUploadingImage(false);
       }
     };
@@ -150,17 +147,17 @@ export default function AddEvent() {
 
   const addEvent = async () => {
     if (!eventTitle.trim() || !eventLocation.trim() || !eventDescription.trim() || !eventPublisher) {
-      setError("Please fill all fields!");
+      setError("Ju lutemi plotesoni te gjitha fushat!");
       return;
     }
 
     if (isNaN(eventDate.getTime())) {
-      setError("Please enter a valid date!");
+      setError("Ju lutemi jepni nje date te vlefshme!");
       return;
     }
 
     if (isNaN(eventTime.getTime())) {
-      setError("Please enter a valid time!");
+      setError("Ju lutemi jepni nje kohe te vlefshme");
       return;
     }
 
@@ -169,7 +166,7 @@ export default function AddEvent() {
       return;
     }
 
-    // 🔥 Use random picsum image if user didn't upload a photo
+  
     const eventImage = eventPhoto || generateRandomEventImage();
 
     const newEvent = {
@@ -258,7 +255,7 @@ export default function AddEvent() {
             >
               <Ionicons name="camera" size={24} color={uploadingImage ? "#999" : "#820D0D"} />
               <Text style={[styles.photoUploadText, uploadingImage && styles.uploadingText]}>
-                {uploadingImage ? "Processing..." : "Upload Event Photo"}
+                {uploadingImage ? "Processing..." : "Shto Nje Foto Eventit"}
               </Text>
             </TouchableOpacity>
           )}
