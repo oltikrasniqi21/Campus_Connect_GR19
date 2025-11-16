@@ -4,7 +4,9 @@
   },
   "dependencies": {
     "expo": "^54.0.13",
+    "expo-auth-session": "~7.0.8",
     "expo-router": "^6.0.12",
+    "expo-web-browser": "~15.0.9",
     "react-native": "^0.82.0"
   }
 }
