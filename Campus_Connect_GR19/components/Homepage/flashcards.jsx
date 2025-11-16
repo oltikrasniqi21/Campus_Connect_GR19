@@ -1,11 +1,10 @@
 import { TouchableOpacity, StyleSheet, Text, View, Modal, Pressable, FlatList, TextInput } from 'react-native';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Entypo, Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { Dimensions } from "react-native";
 import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
 import { db, auth } from '../../firebase';
-import { useFocusEffect } from '@react-navigation/native';
 
 const { width } = Dimensions.get("window");
 
@@ -16,59 +15,48 @@ export function Flashcard({ id, title, date, time, location }) {
     const [newFolderModalVisible, setNewFolderModalVisible] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
 
+    // Check if event exists in global saved_events
     const checkSaved = async () => {
-    try {
-        const user = auth.currentUser;
-        if (!user) {
-            setSaved(false);
-            return;
+        try {
+            const eventSnap = await getDoc(doc(db, "saved_events", id));
+            setSaved(eventSnap.exists());
+        } catch (error) {
+            console.error("Error checking saved event:", error);
         }
-        
-        const eventSnap = await getDoc(doc(db, "saved_events", id));
-        setSaved(eventSnap.exists() && eventSnap.data().savedBy === user.uid);
-    } catch (error) {
-        console.error("Error checking saved event:", error);
-    }
-};
+    };
 
     useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) {
-        setFolders([]);
-        return;
-    }
-    
-    const foldersRef = collection(db, "folders");
-    const unsub = onSnapshot(foldersRef, snapshot => {
-        const data = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(folder => folder.createdBy === user.uid);
-        setFolders(data);
-    });
-    return () => unsub();
-}, []);
+        checkSaved();
+    }, [id]);
+
+    // Listen to folders created by anyone (optional)
+    useEffect(() => {
+        const foldersRef = collection(db, "folders");
+        const unsub = onSnapshot(foldersRef, snapshot => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setFolders(data);
+        });
+        return () => unsub();
+    }, []);
 
     const toggleSave = async () => {
         try {
-            const user = auth.currentUser;
-            if (!user) return;
             const eventRef = doc(db, "saved_events", id);
 
             if (saved) {
                 await deleteDoc(eventRef);
+
+                // Remove from folders if it exists
                 const foldersSnap = await getDocs(collection(db, "folders"));
                 for (const folderDoc of foldersSnap.docs) {
                     const postRef = doc(db, "folders", folderDoc.id, "folder_posts", id);
                     const postSnap = await getDoc(postRef);
                     if (postSnap.exists()) await deleteDoc(postRef);
                 }
+
                 setSaved(false);
             } else {
-                await setDoc(eventRef, {
-                    id, title, date, time, location,
-                    savedBy: user.uid,
-                    savedAt: new Date()
-                });
+                await setDoc(eventRef, { id, title, date, time, location, savedAt: new Date() });
                 setSaved(true);
             }
         } catch (error) {
@@ -78,30 +66,11 @@ export function Flashcard({ id, title, date, time, location }) {
 
     const saveToFolder = async (folderId) => {
         try {
-            const user = auth.currentUser;
-            if (!user) return;
-
             const postRef = doc(db, "folders", folderId, "folder_posts", id);
-            await setDoc(postRef, {
-                id,
-                title,
-                date,
-                time,
-                location,
-                savedBy: user.uid,
-                savedAt: new Date()
-            });
+            await setDoc(postRef, { id, title, date, time, location, savedAt: new Date() });
 
             const mainRef = doc(db, "saved_events", id);
-            await setDoc(mainRef, {
-                id,
-                title,
-                date,
-                time,
-                location,
-                savedBy: user.uid,
-                savedAt: new Date()
-            });
+            await setDoc(mainRef, { id, title, date, time, location, savedAt: new Date() });
 
             setModalVisible(false);
             setSaved(true);
@@ -116,7 +85,6 @@ export function Flashcard({ id, title, date, time, location }) {
             const folderRef = doc(collection(db, "folders"));
             await setDoc(folderRef, {
                 name: newFolderName.trim(),
-                createdBy: auth.currentUser?.uid,
                 createdAt: new Date()
             });
             setNewFolderName("");
@@ -154,11 +122,12 @@ export function Flashcard({ id, title, date, time, location }) {
                     <Ionicons
                         name={saved ? "heart" : "heart-outline"}
                         size={width * 0.08}
-                        color="#820d0d"
+                        color={saved ? "#820d0d" : "#000"}
                     />
                 </TouchableOpacity>
             </View>
 
+            {/* Folder Selection Modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -208,6 +177,7 @@ export function Flashcard({ id, title, date, time, location }) {
                 </View>
             </Modal>
 
+            {/* New Folder Modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
