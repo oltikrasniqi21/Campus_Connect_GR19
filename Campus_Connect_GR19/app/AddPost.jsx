@@ -50,7 +50,7 @@ export default function AddEvent() {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((u) => {
       setEventPublisher(u);
-      console.log("Publisher set to:", u);
+      console.log("Publisher set to:", u.email, " ", u.uid);
     });
 
     return () => unsubscribe();
