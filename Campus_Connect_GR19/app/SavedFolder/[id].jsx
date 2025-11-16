@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, Platform, StatusBar } from "react-native";
 import { useLocalSearchParams } from 'expo-router';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { db, auth } from '../../firebase';
 import { Flashcard } from '../../components/Homepage/flashcards.jsx';
 
 export default function FolderScreen() {
@@ -10,20 +10,24 @@ export default function FolderScreen() {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-  const folderRef = collection(db, "folders", id, "folder_posts");
+    if (!auth.currentUser) return;
 
-  const unsubscribe = onSnapshot(folderRef, (snapshot) => {
-    const data = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
-    setPosts(data);
-  }, (error) => {
-    console.error("Error fetching folder posts:", error);
-  });
+    const folderRef = collection(db, "folders", id, "folder_posts");
 
-  return () => unsubscribe();
-}, [id]);
+    const q = query(folderRef, where("savedBy", "==", auth.currentUser.uid));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setPosts(data);
+    }, (error) => {
+      console.error("Error fetching folder posts:", error);
+    });
+
+    return () => unsubscribe();
+  }, [id]);
 
   return (
     <View style={styles.container}>
