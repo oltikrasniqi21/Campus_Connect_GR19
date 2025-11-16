@@ -38,7 +38,7 @@ export default function Profile() {
         const userSnap = await getDoc(userDocRef);
         if (userSnap.exists()) {
           const data = userSnap.data();
-          setUser({ ...currentUser, firstname: data.firstname, lastname: data.lastname });
+          setUser({ ...currentUser, firstname: data.firstname, lastname: data.lastname, bio: data.bio || "", photoURL: data.photoURL | currentUser.photoURL });
         } else {
           setUser(currentUser);
         }
@@ -123,7 +123,7 @@ export default function Profile() {
         </View>
         <Text style={styles.name}>{currentUser.email}</Text>
         <Text style={styles.subtitle}>
-          Student Ne Fakultetin e Inxhinierise Kompjuterike
+         {user.bio || "no bio yet"}
         </Text>
       </View>
 
