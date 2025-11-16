@@ -80,6 +80,7 @@ export default function TabOneScreen() {
           return (
             <Flashcard
               key={event.id}
+              id={event.id}
               title={event.title}
               date={date}
               time={time}
