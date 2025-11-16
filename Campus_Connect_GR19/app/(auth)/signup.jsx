@@ -49,19 +49,22 @@ export default function Signup() {
 
   const handleSignUp = async () => {
     if (!validateInputs()) return;
-
     setLoading(true);
+
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       setLoading(false);
       setModalVisible(true);
     } catch (error) {
+      console.log("error", error);
       setLoading(false);
       if (error.code === "auth/email-already-in-use") {
         setError("Email already exists.");
       } else {
         setError(error.message);
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -137,7 +140,7 @@ export default function Signup() {
 
 const styles = StyleSheet.create({
   container: {
-    flex:1,
+    flex: 1,
     paddingHorizontal: 25,
     paddingBottom: 60,
     backgroundColor: "#ffffff",

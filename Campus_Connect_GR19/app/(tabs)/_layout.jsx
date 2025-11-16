@@ -49,7 +49,7 @@ export default function TabLayout() {
           backgroundColor: '#8B0000',
         },
         tabBarLabelStyle: { 
-          fontFamily: 'SpaceMono',
+          fontFamily: 'Montserrat',
           fontSize: screenWidth * 0.030,
         },
 
@@ -131,6 +131,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: screenWidth*0.06,
     fontWeight: 'bold',
-    fontFamily:'SpaceMono', 
+    fontFamily:'Montserrat', 
   },
 });
