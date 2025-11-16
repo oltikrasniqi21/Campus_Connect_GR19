@@ -4,7 +4,9 @@ import { Entypo, Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { Dimensions } from "react-native";
 import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
-import { db, auth } from '../../firebase';
+import { db } from '../../firebase';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const { width } = Dimensions.get("window");
 
@@ -14,6 +16,12 @@ export function Flashcard({ id, title, date, time, location }) {
     const [folders, setFolders] = useState([]);
     const [newFolderModalVisible, setNewFolderModalVisible] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
+
+    useFocusEffect(
+    useCallback(() => {
+        checkSaved(); 
+    }, [id])
+);
 
     // Check if event exists in global saved_events
     const checkSaved = async () => {
@@ -29,7 +37,6 @@ export function Flashcard({ id, title, date, time, location }) {
         checkSaved();
     }, [id]);
 
-    // Listen to folders created by anyone (optional)
     useEffect(() => {
         const foldersRef = collection(db, "folders");
         const unsub = onSnapshot(foldersRef, snapshot => {
@@ -56,7 +63,10 @@ export function Flashcard({ id, title, date, time, location }) {
 
                 setSaved(false);
             } else {
-                await setDoc(eventRef, { id, title, date, time, location, savedAt: new Date() });
+                await setDoc(eventRef, {
+                    id, title, date, time, location,
+                    savedAt: new Date()
+                });
                 setSaved(true);
             }
         } catch (error) {
@@ -67,10 +77,24 @@ export function Flashcard({ id, title, date, time, location }) {
     const saveToFolder = async (folderId) => {
         try {
             const postRef = doc(db, "folders", folderId, "folder_posts", id);
-            await setDoc(postRef, { id, title, date, time, location, savedAt: new Date() });
+            await setDoc(postRef, {
+                id,
+                title,
+                date,
+                time,
+                location,
+                savedAt: new Date()
+            });
 
             const mainRef = doc(db, "saved_events", id);
-            await setDoc(mainRef, { id, title, date, time, location, savedAt: new Date() });
+            await setDoc(mainRef, {
+                id,
+                title,
+                date,
+                time,
+                location,
+                savedAt: new Date()
+            });
 
             setModalVisible(false);
             setSaved(true);
@@ -127,7 +151,7 @@ export function Flashcard({ id, title, date, time, location }) {
                 </TouchableOpacity>
             </View>
 
-            {/* Folder Selection Modal */}
+            {/* Folder selection modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -177,7 +201,7 @@ export function Flashcard({ id, title, date, time, location }) {
                 </View>
             </Modal>
 
-            {/* New Folder Modal */}
+            {/* New folder modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
