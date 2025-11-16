@@ -1,15 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Platform, Stack  } from "react-native";
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList } from "react-native";
 import { useRouter } from 'expo-router';
-
-
-const recentlySaved = [
-  { id: '1', title: "Study Group at 626.", photo: require('../assets/images/studygroup.jpeg') },
-  { id: '2', title: "FIEK Party at Rooftop", photo: require('../assets/images/studentParty.jpeg') },
-  { id: '3', title: "Regjistrimi per semestrin e 4", photo: require('../assets/images/semestri4.jpeg') },
-  { id: '4', title: "ID e humbur", photo: require('../assets/images/studentID.jpeg') },
-];
-
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db, auth } from '../firebase';
+import { Flashcard } from '../components/Homepage/flashcards.jsx';
 
 const folders = [
   { id: '1', name: "Important" },
@@ -19,30 +13,41 @@ const folders = [
 ];
 
 export default function SavedPosts() {
-   
   const router = useRouter();
+  const [savedEvents, setSavedEvents] = useState([]);
+  const [userEmail, setUserEmail] = useState('');
 
-const openFolder = (folder) => {
-  router.push(`/SavedFolder/${folder.id}`);
-};
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user) {
+      setUserEmail(user.email);
 
- 
+      const q = query(
+        collection(db, "saved_events"),
+        where("savedBy", "==", user.uid)
+      );
+
+      const unsub = onSnapshot(q, snapshot => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setSavedEvents(data);
+      });
+
+      return unsub;
+    }
+  }, []);
+
+  const openFolder = (folder) => {
+    router.push(`/SavedFolder/${folder.id}`);
+  };
+
   const renderFolder = ({ item }) => (
-    <TouchableOpacity style={styles.folderCard} onPress={() => openFolder(item)}>
+    <View style={styles.folderCard} key={item.id}>
       <Text style={styles.folderTitle}>{item.name}</Text>
       <Text style={styles.folderSubtitle}>4 items</Text>
-    </TouchableOpacity>
-  );
-
-  const renderRecent = ({ item }) => (
-    <View style={styles.recentCard}>
-      <Image source={item.photo} style={styles.recentImage} />
-      <Text style={styles.recentTitle} numberOfLines={1}>{item.title}</Text>
     </View>
   );
 
   return (
-    
     <View style={styles.container}>
       <Text style={styles.header}>Your Folders</Text>
       <FlatList
@@ -51,39 +56,31 @@ const openFolder = (folder) => {
         keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.columnWrapper}
-        scrollEnabled={false} 
+        scrollEnabled={false}
       />
 
       <Text style={[styles.header, { marginTop: 30 }]}>Recently Saved</Text>
       <FlatList
-        data={recentlySaved}
-        renderItem={renderRecent}
+        data={savedEvents}
         keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.recentListContainer}
+        renderItem={({ item }) => (
+          <Flashcard
+            id={item.id}
+            title={item.title}
+            date={item.date}
+            time={item.time}
+            location={item.location}
+          />
+        )}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#F9F9F9',
-  },
-  header: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: '#8B0000',
-    marginBottom: 15,
-  },
-
-  columnWrapper: {
-    justifyContent: "space-between",
-    marginBottom: 10
-  },
-
+  container: { flex: 1, padding: 16, backgroundColor: '#F9F9F9' },
+  header: { fontSize: 22, fontWeight: "800", color: '#8B0000', marginBottom: 15 },
+  columnWrapper: { justifyContent: "space-between", marginBottom: 10 },
   folderCard: {
     backgroundColor: '#c5c5c5ff',
     padding: 20,
@@ -93,40 +90,6 @@ const styles = StyleSheet.create({
     height: 100,
     justifyContent: "space-between",
   },
-
-  folderTitle: {
-    fontWeight: "bold",
-    fontSize: 16,
-    color: '#333333'
-  },
-
-  folderSubtitle: {
-    fontSize: 12,
-    color: '#666666',
-  },
-
-  recentListContainer: {
-    paddingRight: 16,
-  },
-
-  recentCard: {
-    flex: 1,
-    marginHorizontal: 5,
-    marginBottom: 15,
-    alignItems: "flex-start",
-  },
-
-  recentImage: {
-    width: "100%",
-    height: 100,
-    borderRadius: 10,
-    marginBottom: 5,
-    backgroundColor: '#ddd'
-  },
-
-  recentTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: '#333333',
-  },
+  folderTitle: { fontWeight: "bold", fontSize: 16, color: '#333333' },
+  folderSubtitle: { fontSize: 12, color: '#666666' },
 });

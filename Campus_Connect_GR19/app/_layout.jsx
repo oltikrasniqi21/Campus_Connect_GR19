@@ -66,7 +66,7 @@ function RootLayoutNav() {
           options={sharedHeaderOptions("Add New Event")}
         />
         <Stack.Screen
-          name="EventDetails"
+          name="eventDetail/[id]"
           options={sharedHeaderOptions("Event Details")}
         />
         <Stack.Screen

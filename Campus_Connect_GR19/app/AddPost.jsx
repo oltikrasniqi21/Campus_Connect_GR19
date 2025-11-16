@@ -16,6 +16,8 @@ import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firesto
 import  ConfirmModal  from "../components/ConfirmModal.jsx";
 import {db} from "../firebase"
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { auth } from "../firebase.js";
+import { useEffect } from "react";
 
 
 export default function AddEvent() {
@@ -29,7 +31,6 @@ export default function AddEvent() {
   const [eventTime, setEventTime] = useState(new Date());
   const [eventLocation, setEventLocation] = useState("");
   const [eventDescription, setEventDescription] = useState("");
-  const [eventPublisher, setEventPublisher] = useState("");
 
   const [error, setError] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
@@ -45,8 +46,18 @@ export default function AddEvent() {
       eventTime.getMinutes()
   );
 
+  const [eventPublisher, setEventPublisher] = useState(null);
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setEventPublisher(u);
+      console.log("Publisher set to:", u.email, " ", u.uid);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const addEvent = async () => {
-    if (!eventTitle.trim() || !eventLocation.trim() || !eventDescription.trim()) {
+    if (!eventTitle.trim() || !eventLocation.trim() || !eventDescription.trim() || !eventPublisher) {
       setError("Please fill all fields!");
       return;
     }
@@ -62,6 +73,7 @@ export default function AddEvent() {
       time: eventTime,
       location: eventLocation,
       description: eventDescription,
+      publisher: eventPublisher.uid
     };
 
     try{
