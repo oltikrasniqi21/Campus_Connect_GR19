@@ -1,34 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList } from "react-native";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { useRouter } from 'expo-router';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { Flashcard } from '../components/Homepage/flashcards.jsx';
-
-const folders = [
-  { id: '1', name: "Important" },
-  { id: '2', name: "Events" },
-  { id: '3', name: "Study Groups" },
-  { id: '4', name: "Summer '25" },
-];
 
 export default function SavedPosts() {
   const router = useRouter();
   const [savedEvents, setSavedEvents] = useState([]);
-  const [userEmail, setUserEmail] = useState('');
+  const [folders, setFolders] = useState([]);
 
+  // Fetch saved events
   useEffect(() => {
     const user = auth.currentUser;
     if (user) {
-      setUserEmail(user.email);
-
-      const q = query(
-        collection(db, "saved_events"),
-        where("savedBy", "==", user.uid)
-      );
-
+      const q = collection(db, "saved_events");
       const unsub = onSnapshot(q, snapshot => {
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const data = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(event => event.savedBy === user.uid);
         setSavedEvents(data);
       });
 
@@ -36,15 +26,27 @@ export default function SavedPosts() {
     }
   }, []);
 
+  // Fetch folders
+  useEffect(() => {
+    const foldersRef = collection(db, "folders");
+    const unsub = onSnapshot(foldersRef, snapshot => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setFolders(data);
+    });
+
+    return unsub;
+  }, []);
+
   const openFolder = (folder) => {
+    // Navigate to SavedFolder/[id].jsx
     router.push(`/SavedFolder/${folder.id}`);
   };
 
   const renderFolder = ({ item }) => (
-    <View style={styles.folderCard} key={item.id}>
+    <TouchableOpacity style={styles.folderCard} key={item.id} onPress={() => openFolder(item)}>
       <Text style={styles.folderTitle}>{item.name}</Text>
-      <Text style={styles.folderSubtitle}>4 items</Text>
-    </View>
+      <Text style={styles.folderSubtitle}>Folder</Text>
+    </TouchableOpacity>
   );
 
   return (
