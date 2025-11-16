@@ -108,7 +108,11 @@ export default function QandAScreen() {
     try {
       const questionRef = doc(db, "questions", id);
       await updateDoc(questionRef, {
-        answers: arrayUnion(newAnswer),
+        answers: arrayUnion({
+          text: newAnswer,
+          userId: auth.currentUser.uid,
+          createdAt: Date.now(),
+        }),
       });
 
       setNewAnswer("");
