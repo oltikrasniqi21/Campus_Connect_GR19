@@ -154,17 +154,21 @@ export default function Profile() {
           <View style={styles.gridContainer}>
             {posts.map((post) => (
               <TouchableOpacity key={post.id} style={styles.postItem}>
-                {post.imageUrl && (
-                  <Image source={{ uri: post.imageUrl }} style={styles.postImage} />
-                )}
-                <Text style={styles.postTitle} numberOfLines={1}>
-                  {post.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </ScrollView>
+                 {post.eventPhoto ? (
+            <Image source={{ uri: post.eventPhoto }} style={styles.postImage} />
+          ) : (
+            <View style={[styles.postImage, styles.placeholderImage]}>
+              <Ionicons name="calendar" size={24} color="#820D0D" />
+            </View>
+          )}
+          <Text style={styles.postTitle} numberOfLines={1}>
+            {post.title}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  )}
+</ScrollView>
 
       <Modal visible={menuVisible} transparent animationType="none">
         <TouchableOpacity
