@@ -1,35 +1,47 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Modal, TextInput, Pressable, Alert } from "react-native";
 import { useRouter } from 'expo-router';
-import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { Flashcard } from '../components/Homepage/flashcards.jsx';
+
 export default function SavedPosts() {
   const router = useRouter();
   const [savedEvents, setSavedEvents] = useState([]);
   const [folders, setFolders] = useState([]);
-
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState(null);
   const [folderName, setFolderName] = useState("");
 
+  const currentUser = auth.currentUser;
+
   useEffect(() => {
+    if (!currentUser) return;
+
     const savedRef = collection(db, "saved_events");
-    const unsub = onSnapshot(savedRef, snapshot => {
+    const q = query(savedRef, where("savedBy", "==", currentUser.uid));
+
+    const unsub = onSnapshot(q, snapshot => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setSavedEvents(data);
     });
+
     return unsub;
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
+    if (!currentUser) return;
+
     const foldersRef = collection(db, "folders");
-    const unsub = onSnapshot(foldersRef, snapshot => {
+    const q = query(foldersRef, where("createdBy", "==", currentUser.uid));
+
+    const unsub = onSnapshot(q, snapshot => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setFolders(data);
     });
+
     return unsub;
-  }, []);
+  }, [currentUser]);
 
   const openFolder = (folder) => router.push(`/SavedFolder/${folder.id}`);
   const openEditModal = (folder) => {
