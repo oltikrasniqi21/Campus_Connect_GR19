@@ -14,7 +14,6 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { auth, db } from "../firebase";
 import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
@@ -28,6 +27,9 @@ export default function LFManager() {
   const [items, setItems] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("All");
+  const [showFilter, setShowFilter] = useState(false);
 
   const timeAgo = (timestamp) => {
     if (!timestamp) return "";
@@ -80,6 +82,17 @@ export default function LFManager() {
     confirmDelete();
   };
 
+  const filteredItems = items.filter((item) => {
+    const matchesSearch =
+      item.title.toLowerCase().includes(search.toLowerCase()) ||
+      item.location.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus =
+      filterStatus === "All" || item.status === filterStatus;
+
+    return matchesSearch && matchesStatus;
+  });
+
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="folder-open-outline" size={40} color="#820D0D" />
@@ -119,13 +132,14 @@ export default function LFManager() {
                 {item.status}
               </Text>
             </View>
-
-            <TouchableOpacity
-              onPress={() => deleteItem(item.id)}
-              style={styles.deleteIcon}
-            >
-              <Ionicons name="trash-outline" size={18} color="#820D0D" />
-            </TouchableOpacity>
+            {auth.currentUser?.uid === item.userId && (
+              <TouchableOpacity
+                onPress={() => deleteItem(item.id)}
+                style={styles.deleteIcon}
+              >
+                <Ionicons name="trash-outline" size={18} color="#820D0D" />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -183,12 +197,49 @@ export default function LFManager() {
           placeholder="Search"
           placeholderTextColor="#888"
           style={styles.searchInput}
+          value={search}
+          onChangeText={setSearch}
         />
-        <Ionicons name="options-outline" size={20} color="#888" />
+        <Ionicons
+          name="options-outline"
+          size={20}
+          color="#888"
+          onPress={() => setShowFilter(!showFilter)}
+        />
       </View>
+      {showFilter && (
+        <View style={styles.filterDropdown}>
+          {["All", "Lost", "Found"].map((option) => (
+            <TouchableOpacity
+              key={option}
+              onPress={() => {
+                setFilterStatus(option);
+                setShowFilter(false);
+              }}
+              style={[
+                styles.filterItem,
+                filterStatus === option && styles.filterItemActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  filterStatus === option && styles.filterTextActive,
+                ]}
+              >
+                {option}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       <FlatList
-        data={items}
+        data={items.filter(
+          (item) =>
+            (filterStatus === "All" || item.status === filterStatus) &&
+            item.title.toLowerCase().includes(search.toLowerCase())
+        )}
         renderItem={renderItem}
         keyExtractor={(item) => item.id.toString()}
         numColumns={1}
@@ -379,5 +430,36 @@ const styles = StyleSheet.create({
     color: "#555",
     marginTop: 4,
     textAlign: "center",
+  },
+  filterDropdown: {
+    backgroundColor: "#fff",
+    marginHorizontal: 16,
+    marginTop: 4,
+    borderRadius: 10,
+    paddingVertical: 6,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+
+  filterItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+  },
+
+  filterItemActive: {
+    backgroundColor: "#F3E8E8",
+  },
+
+  filterText: {
+    fontSize: 14,
+    color: "#333",
+  },
+
+  filterTextActive: {
+    color: "#820D0D",
+    fontWeight: "bold",
   },
 });
