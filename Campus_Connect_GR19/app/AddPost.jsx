@@ -39,26 +39,30 @@ export default function AddEvent() {
   const [modalMessage, setModalMessage] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
 
-  // Safe date handling function
+  const generateRandomEventImage = () => {
+    const width = 400;
+    const height = 300;
+    const seed = Math.random().toString(36).substring(2);
+
+    return `https://picsum.photos/${width}/${height}?random=${seed}`;
+  };
+
   const handleDateChange = (dateString) => {
     const newDate = new Date(dateString);
     
-    // Check if the date is valid
     if (isNaN(newDate.getTime())) {
       setError("Please enter a valid date!");
       return;
     }
     
     setEventDate(newDate);
-    setError(""); // Clear any previous errors
+    setError("");
   };
 
-  // Safe time handling function
   const handleTimeChange = (timeString) => {
     const [hours, minutes] = timeString.split(":");
     const newTime = new Date(eventTime);
     
-    // Validate hours and minutes
     if (hours === undefined || minutes === undefined || 
         isNaN(hours) || isNaN(minutes) || 
         hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
@@ -72,7 +76,6 @@ export default function AddEvent() {
     setError("");
   };
 
-  // Safe eventDateTime calculation
   const getEventDateTime = () => {
     try {
       return new Date(
@@ -84,7 +87,7 @@ export default function AddEvent() {
       );
     } catch (error) {
       console.error("Error calculating event date:", error);
-      return new Date(); // Return current date as fallback
+      return new Date();
     }
   };
 
@@ -110,7 +113,7 @@ export default function AddEvent() {
       if (!file) return;
       
       if (file.size > 1024 * 1024) {
-        Alert.alert("Error", "Please select an image smaller than 1MB");
+        Alert.alert("Error", "Ju lutem zgjidhni nje imazh me te vogel se 1MB");
         return;
       }
       
@@ -124,13 +127,13 @@ export default function AddEvent() {
           setUploadingImage(false);
         };
         reader.onerror = () => {
-          Alert.alert("Error", "Failed to process image");
+          Alert.alert("Error", "Procesimi i imazhit deshtoi");
           setUploadingImage(false);
         };
         reader.readAsDataURL(file);
       } catch (error) {
         console.error("Error:", error);
-        Alert.alert("Error", "Failed to process image");
+        Alert.alert("Error", "Procesimi i imazhit deshtoi");
         setUploadingImage(false);
       }
     };
@@ -143,28 +146,28 @@ export default function AddEvent() {
   };
 
   const addEvent = async () => {
-    // Validate all fields
     if (!eventTitle.trim() || !eventLocation.trim() || !eventDescription.trim() || !eventPublisher) {
-      setError("Please fill all fields!");
+      setError("Ju lutemi plotesoni te gjitha fushat!");
       return;
     }
 
-    // Validate date and time
     if (isNaN(eventDate.getTime())) {
-      setError("Please enter a valid date!");
+      setError("Ju lutemi jepni nje date te vlefshme!");
       return;
     }
 
     if (isNaN(eventTime.getTime())) {
-      setError("Please enter a valid time!");
+      setError("Ju lutemi jepni nje kohe te vlefshme");
       return;
     }
 
-    // Validate that event is in the future
     if (eventDateTime < new Date()) {
       setError("Data ose koha eshte vendosur gabim! Eventi duhet te jete ne te ardhmen.");
       return;
     }
+
+  
+    const eventImage = eventPhoto || generateRandomEventImage();
 
     const newEvent = {
       title: eventTitle,
@@ -173,7 +176,7 @@ export default function AddEvent() {
       location: eventLocation,
       description: eventDescription,
       publisher: eventPublisher.uid,
-      eventPhoto: eventPhoto,
+      eventPhoto: eventImage,
       createdAt: new Date()
     };
 
@@ -204,21 +207,19 @@ export default function AddEvent() {
     }
   };
 
-  // Safe date formatting for web input
   const getSafeDateValue = () => {
     try {
       return eventDate.toISOString().slice(0, 10);
     } catch (error) {
-      return new Date().toISOString().slice(0, 10); // Fallback to current date
+      return new Date().toISOString().slice(0, 10);
     }
   };
 
-  // Safe time formatting for web input
   const getSafeTimeValue = () => {
     try {
       return eventTime.toTimeString().slice(0, 5);
     } catch (error) {
-      return new Date().toTimeString().slice(0, 5); // Fallback to current time
+      return new Date().toTimeString().slice(0, 5);
     }
   };
 
@@ -254,7 +255,7 @@ export default function AddEvent() {
             >
               <Ionicons name="camera" size={24} color={uploadingImage ? "#999" : "#820D0D"} />
               <Text style={[styles.photoUploadText, uploadingImage && styles.uploadingText]}>
-                {uploadingImage ? "Processing..." : "Add Photo"}
+                {uploadingImage ? "Processing..." : "Shto Nje Foto Eventit"}
               </Text>
             </TouchableOpacity>
           )}
@@ -275,7 +276,7 @@ export default function AddEvent() {
                   border: "1px solid #ccc",
                   backgroundColor: "#fafafa"
                 }}
-                min={new Date().toISOString().split('T')[0]} // Set min date to today
+                min={new Date().toISOString().split('T')[0]}
               />
             ) : (
               <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
@@ -380,22 +381,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 20,
   },
-  headerContainer: {
-    paddingVertical: 20,
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee'
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#820D0D',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
   dateTimeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -433,6 +418,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 20,
     backgroundColor: "#fafafa",
+    width: '100%',
   },
   uploadingButton: {
     borderColor: "#999",
@@ -462,18 +448,6 @@ const styles = StyleSheet.create({
     right: -10,
     backgroundColor: '#fff',
     borderRadius: 12,
-  },
-  infoBox: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
-    padding: 10,
-    marginTop: 6,
-  },
-  infoInput: {
-    color: "#333",
-    fontSize: 14,
-    lineHeight: 20,
-    textAlignVertical: "top",
   },
   submitButton: {
     backgroundColor: "#820D0D",

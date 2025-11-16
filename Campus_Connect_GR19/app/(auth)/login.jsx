@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   googleBtn: {
-    backgroundColor: "#4285F4", // Google Blue
+    backgroundColor: "#4285F4", 
     paddingVertical: 14,
     borderRadius: 12,
     flexDirection: "row",

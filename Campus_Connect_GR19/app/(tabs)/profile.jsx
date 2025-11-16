@@ -15,20 +15,22 @@ import {
 import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { auth } from "../../firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { signOut } from "firebase/auth";
+import { doc, getDoc, collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
-
 
 const { width } = Dimensions.get("window");
 
 export default function Profile() {
   const router = useRouter();
   const slideAnim = useRef(new Animated.Value(width)).current;
+
   const [user, setUser] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
   const [posts, setPosts] = useState([]);
+  const [lfPosts, setLfPosts] = useState([]);
+  const [tab, setTab] = useState("events");
+
   const currentUser = auth.currentUser;
 
   useEffect(() => {
@@ -38,7 +40,13 @@ export default function Profile() {
         const userSnap = await getDoc(userDocRef);
         if (userSnap.exists()) {
           const data = userSnap.data();
-          setUser({ ...currentUser, firstname: data.firstname, lastname: data.lastname, bio: data.bio || "", photoURL: data.photoURL || currentUser.photoURL });
+          setUser({
+            ...currentUser,
+            firstname: data.firstname,
+            lastname: data.lastname,
+            bio: data.bio || "",
+            photoURL: data.photoURL || currentUser.photoURL,
+          });
         } else {
           setUser(currentUser);
         }
@@ -50,15 +58,24 @@ export default function Profile() {
 
   useEffect(() => {
     if (!user) return;
-
     const postsRef = collection(db, "events");
     const q = query(postsRef, where("publisher", "==", user.uid));
     const unsubscribePosts = onSnapshot(q, (snapshot) => {
       const userPosts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setPosts(userPosts);
     });
-
     return unsubscribePosts;
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const lfRef = collection(db, "lost_found_items");
+    const q = query(lfRef, where("userId", "==", user.uid));
+    const unsubscribeLf = onSnapshot(q, (snapshot) => {
+      const userLf = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setLfPosts(userLf);
+    });
+    return unsubscribeLf;
   }, [user]);
 
   const handleSignOut = async () => {
@@ -66,19 +83,14 @@ export default function Profile() {
       await signOut(auth);
       router.replace("/login");
     } catch (error) {
-      console.error("error", error);
+      console.error(error);
     }
   };
 
-  const toggleMenu = () => {
-    setMenuVisible((prev) => !prev);
-  };
-
+  const toggleMenu = () => setMenuVisible((prev) => !prev);
   useEffect(() => {
     global.toggleProfileMenu = toggleMenu;
-    return () => {
-      global.toggleProfileMenu = null;
-    };
+    return () => (global.toggleProfileMenu = null);
   }, [toggleMenu]);
 
   useEffect(() => {
@@ -99,19 +111,109 @@ export default function Profile() {
     );
   }
 
+  const renderGrid = (data, type) => {
+    if (data.length === 0) {
+      return (
+        <View style={{ alignItems: "center", marginTop: 50 }}>
+          <Text style={{ fontSize: 16, marginBottom: 15 }}>
+            {type === "events" ? "Nuk keni krijuar asnje event" : "Ju nuk keni krijuar asnje postim"}
+          </Text>
+          <TouchableOpacity
+            style={{
+              backgroundColor: "#820D0D",
+              paddingVertical: 12,
+              paddingHorizontal: 25,
+              borderRadius: 12,
+            }}
+            onPress={() => router.push(type === "events" ? "/AddPost" : "/postLFItem")}
+          >
+            <Text style={{ color: "#fff", fontWeight: "700" }}>
+              {type === "events" ? "Krijo Event të Ri" : "Krijo nje postim te ri"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.gridContainer}>
+        {data.map((post) => (
+          <TouchableOpacity
+            key={post.id}
+            style={styles.postItem}
+            onPress={() => {
+              if (type === "events") {
+                router.push(`/eventDetail/${post.id}`);
+              } else {
+                let postedTime = "";
+                if (post.postedTime?.toDate) {
+                  const now = new Date();
+                  const postDate = post.postedTime.toDate();
+                  const diffMs = now - postDate;
+                  const diffSec = Math.floor(diffMs / 1000);
+                  const diffMin = Math.floor(diffSec / 60);
+                  const diffHr = Math.floor(diffMin / 60);
+                  const diffDay = Math.floor(diffHr / 24);
+
+                  if (diffDay > 0) postedTime = `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
+                  else if (diffHr > 0) postedTime = `${diffHr} hour${diffHr > 1 ? "s" : ""} ago`;
+                  else if (diffMin > 0) postedTime = `${diffMin} min${diffMin > 1 ? "s" : ""} ago`;
+                  else postedTime = "Just now";
+                } else {
+                  postedTime = post.postedTime || "";
+                }
+
+
+                router.push({
+                  pathname: `/items/${post.id}`,
+                  params: {
+                    title: post.title,
+                    description: post.description,
+                    status: post.status,
+                    location: post.location,
+                    postedBy: post.postedBy || `${user.firstname} ${user.lastname}`,
+                    postedBy: post.postedBy || `${user.firstname} ${user.lastname}`,
+                    postedTime,
+                    additionalInfo: post.additionalInfo,
+                    photo: post.photo,
+                    pfp: post.pfp,
+                  },
+                });
+              }
+            }}
+          >
+            {post.eventPhoto || post.photo ? (
+              <Image
+                source={{ uri: post.eventPhoto || post.photo }}
+                style={styles.postImage}
+              />
+            ) : (
+              <View style={[styles.postImage, styles.placeholderImage]}>
+                <Ionicons name="calendar" size={24} color="#820D0D" />
+              </View>
+            )}
+            <Text style={styles.postTitle} numberOfLines={1}>
+              {post.title}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.profileSection}>
         <Image
-          source={{
-            uri: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid} || `,
-          }}
+          source={{ uri: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}` }}
           style={styles.avatar}
         />
 
         <View style={styles.nameRow}>
           <Text style={styles.fullName}>
-            {user?.firstname && user?.lastname ? `${user.firstname} ${user.lastname}` : "User"}
+            {user.firstname && user.lastname
+              ? `${user.firstname} ${user.lastname}`
+              : "User"}
           </Text>
           <TouchableOpacity
             style={styles.editIcon}
@@ -119,56 +221,54 @@ export default function Profile() {
           >
             <Ionicons name="pencil" size={20} color="#D40000" />
           </TouchableOpacity>
-
         </View>
-        <Text style={styles.name}>{currentUser.email}</Text>
-        <Text style={styles.subtitle}>
-         {user.bio || "no bio yet"}
-        </Text>
+
+        <Text style={styles.email} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} textAlign="center">{currentUser.email}</Text>
+        <Text style={styles.subtitle}>{user.bio || "no bio yet"}</Text>
+      </View>
+
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            tab === "events" ? styles.activeTab : null,
+          ]}
+          onPress={() => setTab("events")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              tab === "events" ? styles.activeTabText : null,
+            ]}
+          >
+            Eventet e Juaja
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tab,
+            tab === "lf" ? styles.activeTab : null,
+          ]}
+          onPress={() => setTab("lf")}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              tab === "lf" ? styles.activeTabText : null,
+            ]}
+          >
+            LF Postimet
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
         contentContainerStyle={styles.postsContainer}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Eventet e Juaja</Text>
-
-        {posts.length === 0 ? (
-
-          <View style={{ alignItems: "center", marginTop: 50 }}>
-            <Text style={{ fontSize: 16, marginBottom: 15 }}>Nuk keni krijuar asnje event</Text>
-            <TouchableOpacity
-              style={{
-                backgroundColor: "#820D0D",
-                paddingVertical: 12,
-                paddingHorizontal: 25,
-                borderRadius: 12,
-              }}
-              onPress={() => router.push("/AddPost")}
-            >
-              <Text style={{ color: "#fff", fontWeight: "700" }}>Krijo Event të Ri</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-
-          <View style={styles.gridContainer}>
-            {posts.map((post) => (
-              <TouchableOpacity key={post.id} style={styles.postItem}>
-                 {post.eventPhoto ? (
-            <Image source={{ uri: post.eventPhoto }} style={styles.postImage} />
-          ) : (
-            <View style={[styles.postImage, styles.placeholderImage]}>
-              <Ionicons name="calendar" size={24} color="#820D0D" />
-            </View>
-          )}
-          <Text style={styles.postTitle} numberOfLines={1}>
-            {post.title}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  )}
-</ScrollView>
+        {tab === "events" ? renderGrid(posts, "events") : renderGrid(lfPosts, "lf")}
+      </ScrollView>
 
       <Modal visible={menuVisible} transparent animationType="none">
         <TouchableOpacity
@@ -195,17 +295,18 @@ export default function Profile() {
               <Text style={styles.menuText}>Saved</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() =>
+              { toggleMenu();
+                router.push("/editProfile")
+              }
+              }>
               <Feather name="edit" size={22} color="#fff" />
-              <Text style={styles.menuText}>Edit Account Details</Text>
+              <Text style={styles.menuText}>Edit Profile Details</Text>
             </TouchableOpacity>
 
             <View style={styles.spacer} />
 
-            <TouchableOpacity
-              style={styles.logoutButton}
-              onPress={handleSignOut}
-            >
+            <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
               <Ionicons name="log-out-outline" size={22} color="#fff" />
               <Text style={styles.menuText}>Log Out</Text>
             </TouchableOpacity>
@@ -215,7 +316,6 @@ export default function Profile() {
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -227,10 +327,12 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
+
   profileSection: {
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 15,
   },
+
   avatar: {
     width: 110,
     height: 110,
@@ -239,68 +341,102 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "#E0DDD5",
   },
+
   nameRow: {
     flexDirection: "row",
     alignItems: "center",
   },
-  name: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#656565",
-  },
+
   fullName: {
     fontSize: 22,
     fontWeight: "bold",
     color: "#656565",
   },
-  email: {
-    fontSize: 16,
-    color: "#898580",
-    marginTop: 4,
+
+  name: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#656565",
+    textAlign: "center",
   },
+
   editIcon: {
     marginLeft: 8,
   },
+
   subtitle: {
     fontSize: 14,
     color: "#898580",
     marginTop: 4,
   },
+
   postsContainer: {
     paddingBottom: 100,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 10,
-    color: "#820D0D",
-  },
+
   gridContainer: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
   },
+
   postItem: {
     width: "31%",
     marginBottom: 15,
     alignItems: "center",
   },
+
   postImage: {
     width: "100%",
     aspectRatio: 1,
     borderRadius: 12,
     backgroundColor: "#E0DDD5",
   },
+
   postTitle: {
     marginTop: 6,
     fontSize: 13,
     color: "#656565",
     textAlign: "center",
   },
+
+  placeholderImage: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  tabsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 15,
+  },
+
+  tab: {
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderBottomWidth: 2,
+    borderBottomColor: "transparent",
+  },
+
+  activeTab: {
+    borderBottomColor: "#820D0D",
+  },
+
+  tabText: {
+    fontSize: 16,
+    color: "#888",
+    fontWeight: "600",
+  },
+
+  activeTabText: {
+    color: "#820D0D",
+  },
+
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.3)",
   },
+
   menuContainer: {
     position: "absolute",
     top: 0,
@@ -310,28 +446,39 @@ const styles = StyleSheet.create({
     backgroundColor: "#820D0D",
     padding: 20,
   },
+
   menuTitle: {
     fontSize: 20,
     color: "#fff",
     fontWeight: "bold",
     marginBottom: 20,
   },
+
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     marginVertical: 15,
   },
+
   menuText: {
     color: "#fff",
     fontSize: 16,
     marginLeft: 10,
   },
+
   spacer: {
     flex: 1,
   },
+
   logoutButton: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
+  },
+
+  email: {
+  fontSize: 16,
+  color: "#898580",
+  marginTop: 4,
   },
 });
