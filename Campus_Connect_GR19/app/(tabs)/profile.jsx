@@ -18,6 +18,8 @@ import { auth } from "../../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
+
 
 const { width } = Dimensions.get("window");
 
@@ -26,17 +28,19 @@ export default function Profile() {
   const slideAnim = useRef(new Animated.Value(width)).current;
   const [user, setUser] = useState(null);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [posts, setPosts] = useState([]);
   const currentUser = auth.currentUser;
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
-        setUser(currentUser);
         const userDocRef = doc(db, "users", currentUser.uid);
         const userSnap = await getDoc(userDocRef);
         if (userSnap.exists()) {
           const data = userSnap.data();
-          setUser({ ...currentUser, firstname: data.firstname, lastname: data.lastname });
+          setUser({ ...currentUser, firstname: data.firstname, lastname: data.lastname, bio: data.bio || "", photoURL: data.photoURL || currentUser.photoURL });
+        } else {
+          setUser(currentUser);
         }
       }
     });
@@ -44,6 +48,18 @@ export default function Profile() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const postsRef = collection(db, "events");
+    const q = query(postsRef, where("publisher", "==", user.uid));
+    const unsubscribePosts = onSnapshot(q, (snapshot) => {
+      const userPosts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+      setPosts(userPosts);
+    });
+
+    return unsubscribePosts;
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
@@ -88,7 +104,7 @@ export default function Profile() {
       <View style={styles.profileSection}>
         <Image
           source={{
-            uri: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
+            uri: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid} || `,
           }}
           style={styles.avatar}
         />
@@ -107,7 +123,7 @@ export default function Profile() {
         </View>
         <Text style={styles.name}>{currentUser.email}</Text>
         <Text style={styles.subtitle}>
-          Student Ne Fakultetin e Inxhinierise Kompjuterike
+         {user.bio || "no bio yet"}
         </Text>
       </View>
 
@@ -115,50 +131,44 @@ export default function Profile() {
         contentContainerStyle={styles.postsContainer}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionTitle}>Your Posts</Text>
+        <Text style={styles.sectionTitle}>Eventet e Juaja</Text>
 
-        <View style={styles.gridContainer}>
-          {[
-            {
-              id: 1,
-              title: "ID i humbur",
-              image: "https://picsum.photos/200/200?random=1",
-            },
-            {
-              id: 2,
-              title: "Study Group",
-              image: "https://picsum.photos/200/200?random=2",
-            },
-            {
-              id: 3,
-              title: "Event Per Data Security",
-              image: "https://picsum.photos/200/200?random=3",
-            },
-            {
-              id: 4,
-              title: "This is the best University Ever o My gOD!",
-              image: "https://picsum.photos/200/200?random=4",
-            },
-            {
-              id: 5,
-              title: "Mbledhemi per loje Volleyboll",
-              image: "https://picsum.photos/200/200?random=5",
-            },
-            {
-              id: 6,
-              title: "Trajnim ne UI/UX",
-              image: "https://picsum.photos/200/200?random=6",
-            },
-          ].map((post) => (
-            <TouchableOpacity key={post.id} style={styles.postItem}>
-              <Image source={{ uri: post.image }} style={styles.postImage} />
-              <Text style={styles.postTitle} numberOfLines={1}>
-                {post.title}
-              </Text>
+        {posts.length === 0 ? (
+
+          <View style={{ alignItems: "center", marginTop: 50 }}>
+            <Text style={{ fontSize: 16, marginBottom: 15 }}>Nuk keni krijuar asnje event</Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: "#820D0D",
+                paddingVertical: 12,
+                paddingHorizontal: 25,
+                borderRadius: 12,
+              }}
+              onPress={() => router.push("/AddPost")}
+            >
+              <Text style={{ color: "#fff", fontWeight: "700" }}>Krijo Event të Ri</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
+          </View>
+        ) : (
+
+          <View style={styles.gridContainer}>
+            {posts.map((post) => (
+              <TouchableOpacity key={post.id} style={styles.postItem}>
+                 {post.eventPhoto ? (
+            <Image source={{ uri: post.eventPhoto }} style={styles.postImage} />
+          ) : (
+            <View style={[styles.postImage, styles.placeholderImage]}>
+              <Ionicons name="calendar" size={24} color="#820D0D" />
+            </View>
+          )}
+          <Text style={styles.postTitle} numberOfLines={1}>
+            {post.title}
+          </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  )}
+</ScrollView>
 
       <Modal visible={menuVisible} transparent animationType="none">
         <TouchableOpacity
@@ -205,6 +215,7 @@ export default function Profile() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

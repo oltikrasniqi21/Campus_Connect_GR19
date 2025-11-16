@@ -9,42 +9,86 @@ import {
   ScrollView,
   Platform,
   StatusBar,
+  Image,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
-import  ConfirmModal  from "../components/ConfirmModal.jsx";
-import {db} from "../firebase"
+import ConfirmModal from "../components/ConfirmModal.jsx";
+import { db } from "../firebase";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { auth } from "../firebase.js";
 import { useEffect } from "react";
-
 
 export default function AddEvent() {
   const router = useRouter();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
-
   const [eventTitle, setEventTitle] = useState("");
   const [eventDate, setEventDate] = useState(new Date());
   const [eventTime, setEventTime] = useState(new Date());
   const [eventLocation, setEventLocation] = useState("");
   const [eventDescription, setEventDescription] = useState("");
+  const [eventPhoto, setEventPhoto] = useState(null);
 
   const [error, setError] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState("")
-  const [modalMessage, setModalMessage] = useState("")
+  const [modalType, setModalType] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
 
-  //perdoret vetem me krahasu nese koha eventit eshte me e madhe se data aktuale
-  const eventDateTime = new Date(
-      eventDate.getFullYear(),
-      eventDate.getMonth(),
-      eventDate.getDate(),
-      eventTime.getHours(),
-      eventTime.getMinutes()
-  );
+  // Safe date handling function
+  const handleDateChange = (dateString) => {
+    const newDate = new Date(dateString);
+    
+    // Check if the date is valid
+    if (isNaN(newDate.getTime())) {
+      setError("Please enter a valid date!");
+      return;
+    }
+    
+    setEventDate(newDate);
+    setError(""); // Clear any previous errors
+  };
+
+  // Safe time handling function
+  const handleTimeChange = (timeString) => {
+    const [hours, minutes] = timeString.split(":");
+    const newTime = new Date(eventTime);
+    
+    // Validate hours and minutes
+    if (hours === undefined || minutes === undefined || 
+        isNaN(hours) || isNaN(minutes) || 
+        hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      setError("Please enter a valid time!");
+      return;
+    }
+    
+    newTime.setHours(parseInt(hours));
+    newTime.setMinutes(parseInt(minutes));
+    setEventTime(newTime);
+    setError("");
+  };
+
+  // Safe eventDateTime calculation
+  const getEventDateTime = () => {
+    try {
+      return new Date(
+        eventDate.getFullYear(),
+        eventDate.getMonth(),
+        eventDate.getDate(),
+        eventTime.getHours(),
+        eventTime.getMinutes()
+      );
+    } catch (error) {
+      console.error("Error calculating event date:", error);
+      return new Date(); // Return current date as fallback
+    }
+  };
+
+  const eventDateTime = getEventDateTime();
 
   const [eventPublisher, setEventPublisher] = useState(null);
   useEffect(() => {
@@ -56,14 +100,69 @@ export default function AddEvent() {
     return () => unsubscribe();
   }, []);
 
+  const handleAddPhoto = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (file.size > 1024 * 1024) {
+        Alert.alert("Error", "Please select an image smaller than 1MB");
+        return;
+      }
+      
+      setUploadingImage(true);
+      
+      try {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64Image = event.target.result;
+          setEventPhoto(base64Image);
+          setUploadingImage(false);
+        };
+        reader.onerror = () => {
+          Alert.alert("Error", "Failed to process image");
+          setUploadingImage(false);
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Error:", error);
+        Alert.alert("Error", "Failed to process image");
+        setUploadingImage(false);
+      }
+    };
+    
+    input.click();
+  };
+
+  const handleRemovePhoto = () => {
+    setEventPhoto(null);
+  };
+
   const addEvent = async () => {
+    // Validate all fields
     if (!eventTitle.trim() || !eventLocation.trim() || !eventDescription.trim() || !eventPublisher) {
       setError("Please fill all fields!");
       return;
     }
 
-    if(eventDateTime < new Date()  || eventDateTime < new Date()){
-      setError("Data ose koha eshte vendosur gabim!");
+    // Validate date and time
+    if (isNaN(eventDate.getTime())) {
+      setError("Please enter a valid date!");
+      return;
+    }
+
+    if (isNaN(eventTime.getTime())) {
+      setError("Please enter a valid time!");
+      return;
+    }
+
+    // Validate that event is in the future
+    if (eventDateTime < new Date()) {
+      setError("Data ose koha eshte vendosur gabim! Eventi duhet te jete ne te ardhmen.");
       return;
     }
 
@@ -73,10 +172,12 @@ export default function AddEvent() {
       time: eventTime,
       location: eventLocation,
       description: eventDescription,
-      publisher: eventPublisher.uid
+      publisher: eventPublisher.uid,
+      eventPhoto: eventPhoto,
+      createdAt: new Date()
     };
 
-    try{
+    try {
       await addDoc(collection(db, "events"), newEvent);
       
       setModalVisible(true);
@@ -89,15 +190,37 @@ export default function AddEvent() {
       setEventTime(new Date());
       setEventLocation("");
       setEventDescription("");
-    }catch(error){
+      setEventPhoto(null);
+    } catch (error) {
       console.error("Error adding event: ", error);
+      setError("Failed to create event. Please try again.");
     }
   };
 
   const handleModalClose = () => {
-        setModalVisible(false);
-  }
+    setModalVisible(false);
+    if (modalType === "success") {
+      router.back();
+    }
+  };
 
+  // Safe date formatting for web input
+  const getSafeDateValue = () => {
+    try {
+      return eventDate.toISOString().slice(0, 10);
+    } catch (error) {
+      return new Date().toISOString().slice(0, 10); // Fallback to current date
+    }
+  };
+
+  // Safe time formatting for web input
+  const getSafeTimeValue = () => {
+    try {
+      return eventTime.toTimeString().slice(0, 5);
+    } catch (error) {
+      return new Date().toTimeString().slice(0, 5); // Fallback to current time
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -105,8 +228,6 @@ export default function AddEvent() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-
-    
         <Text style={styles.label}>Emri Eventit</Text>
         <TextInput
           style={styles.input}
@@ -116,6 +237,29 @@ export default function AddEvent() {
           onChangeText={setEventTitle}
         />
         
+        <Text style={styles.label}>Foto e Eventit (Opsionale)</Text>
+        <View style={styles.photoSection}>
+          {eventPhoto ? (
+            <View style={styles.photoPreviewContainer}>
+              <Image source={{ uri: eventPhoto }} style={styles.photoPreview} />
+              <TouchableOpacity style={styles.removePhotoButton} onPress={handleRemovePhoto}>
+                <Ionicons name="close-circle" size={24} color="#820D0D" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity 
+              style={[styles.photoUploadButton, uploadingImage && styles.uploadingButton]} 
+              onPress={handleAddPhoto}
+              disabled={uploadingImage}
+            >
+              <Ionicons name="camera" size={24} color={uploadingImage ? "#999" : "#820D0D"} />
+              <Text style={[styles.photoUploadText, uploadingImage && styles.uploadingText]}>
+                {uploadingImage ? "Processing..." : "Add Photo"}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         <View style={styles.dateTimeRow}>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Data</Text>
@@ -123,19 +267,27 @@ export default function AddEvent() {
             {Platform.OS === "web" ? (
               <input
                 type="date"
-                value={eventDate.toISOString().slice(0, 10)}
-                onChange={(e) => setEventDate(new Date(e.target.value))}
-                style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }}
+                value={getSafeDateValue()}
+                onChange={(e) => handleDateChange(e.target.value)}
+                style={{ 
+                  padding: 10, 
+                  borderRadius: 8, 
+                  border: "1px solid #ccc",
+                  backgroundColor: "#fafafa"
+                }}
+                min={new Date().toISOString().split('T')[0]} // Set min date to today
               />
             ) : (
-                <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
-                  <Text style={{color:"gray"}}>{eventDate.toLocaleDateString()}</Text>
-                </TouchableOpacity>
+              <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
+                <Text style={{ color: "gray" }}>
+                  {isNaN(eventDate.getTime()) ? "Select Date" : eventDate.toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
             )}
 
             {showDatePicker && (
               <DateTimePicker
-                value={eventDate}
+                value={isNaN(eventDate.getTime()) ? new Date() : eventDate}
                 mode="date"
                 display="default"
                 onChange={(event, selectedDate) => {
@@ -146,40 +298,41 @@ export default function AddEvent() {
             )}
           </View>
 
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Koha</Text>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Koha</Text>
 
-              {Platform.OS === "web" ? (
+            {Platform.OS === "web" ? (
               <input
-                  type="time"
-                  value={eventTime.toTimeString().slice(0,5)}
-                  onChange={(e) => {
-                    const [hours, minutes] = e.target.value.split(":");
-                    const newTime = new Date(eventTime);
-                    newTime.setHours(hours);
-                    newTime.setMinutes(minutes);
-                    setEventTime(newTime);
-                  }}
-                  style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }}
-                />
-              ) : (
+                type="time"
+                value={getSafeTimeValue()}
+                onChange={(e) => handleTimeChange(e.target.value)}
+                style={{ 
+                  padding: 10, 
+                  borderRadius: 8, 
+                  border: "1px solid #ccc",
+                  backgroundColor: "#fafafa"
+                }}
+              />
+            ) : (
               <TouchableOpacity style={styles.input} onPress={() => setShowTimePicker(true)}>
-                <Text style={{color:"gray"}}>{eventTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
+                <Text style={{ color: "gray" }}>
+                  {isNaN(eventTime.getTime()) ? "Select Time" : eventTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </Text>
               </TouchableOpacity>
             )}
 
-              {showTimePicker && (
-                <DateTimePicker
-                  value={eventTime}
-                  mode="time"
-                  display="default"
-                  onChange={(event, selectedTime) => {
-                    setShowTimePicker(false);
-                    if (selectedTime) setEventTime(selectedTime);
-                  }}
-                />
-              )}
-            </View>
+            {showTimePicker && (
+              <DateTimePicker
+                value={isNaN(eventTime.getTime()) ? new Date() : eventTime}
+                mode="time"
+                display="default"
+                onChange={(event, selectedTime) => {
+                  setShowTimePicker(false);
+                  if (selectedTime) setEventTime(selectedTime);
+                }}
+              />
+            )}
+          </View>
         </View>
 
         <Text style={styles.label}>Lokacioni</Text>
@@ -202,17 +355,16 @@ export default function AddEvent() {
         />
 
         <TouchableOpacity style={styles.submitButton} onPress={addEvent}>
-          <Ionicons name="calendar-sharp" size={20} color="#fff" style={{marginRight: 8}}/>
+          <Ionicons name="calendar-sharp" size={20} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.submitText}>Shto Eventin</Text>
         </TouchableOpacity>
-        {error ? <Text style={{color: 'red', fontSize: 18, textAlign:"center", marginTop: 10}}>{error}</Text> : null}
+        {error ? <Text style={{ color: 'red', fontSize: 18, textAlign: "center", marginTop: 10 }}>{error}</Text> : null}
         <ConfirmModal
-            visible={modalVisible}
-            type={modalType}
-            message={modalMessage}
-            onClose={handleModalClose}
+          visible={modalVisible}
+          type={modalType}
+          message={modalMessage}
+          onClose={handleModalClose}
         />
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -226,6 +378,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   headerContainer: {
     paddingVertical: 20,
@@ -243,7 +396,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 4,
   },
-  
   dateTimeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -254,8 +406,6 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 5,
   },
-  
-
   label: {
     color: "#820D0D",
     fontWeight: "600",
@@ -269,6 +419,50 @@ const styles = StyleSheet.create({
     padding: 10,
     backgroundColor: "#fafafa",
   },
+  
+  photoSection: {
+    marginBottom: 10,
+  },
+  photoUploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: "#820D0D",
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    padding: 20,
+    backgroundColor: "#fafafa",
+  },
+  uploadingButton: {
+    borderColor: "#999",
+  },
+  photoUploadText: {
+    color: "#820D0D",
+    fontWeight: "600",
+    marginLeft: 8,
+  },
+  uploadingText: {
+    color: "#999",
+  },
+  photoPreviewContainer: {
+    position: 'relative',
+    alignItems: 'center',
+  },
+  photoPreview: {
+    width: 200,
+    height: 150,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: "#820D0D",
+  },
+  removePhotoButton: {
+    position: 'absolute',
+    top: -10,
+    right: -10,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+  },
   infoBox: {
     backgroundColor: "#F5F5F5",
     borderRadius: 10,
@@ -279,7 +473,7 @@ const styles = StyleSheet.create({
     color: "#333",
     fontSize: 14,
     lineHeight: 20,
-    textAlignVertical: "top", 
+    textAlignVertical: "top",
   },
   submitButton: {
     backgroundColor: "#820D0D",
@@ -289,8 +483,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 10,
     marginTop: 30,
-    elevation: 5, 
-    shadowColor: '#000', 
+    elevation: 5,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,

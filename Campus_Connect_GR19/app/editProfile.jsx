@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,15 +7,16 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  Dimensions,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-
-const { width } = Dimensions.get("window");
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
 
 export default function EditProfile() {
   const router = useRouter();
+  const currentUser = auth.currentUser;
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -23,30 +24,112 @@ export default function EditProfile() {
   const [profilePicture, setProfilePicture] = useState(
     "https://i.pravatar.cc/150?img=12"
   );
+  const [uploading, setUploading] = useState(false);
 
-  const handleSave = () => {
-    console.log("Save button pressed");
-  };
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const loadUser = async () => {
+      try {
+        const snap = await getDoc(doc(db, "users", currentUser.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          setFirstName(data.firstname || "");
+          setLastName(data.lastname || "");
+          setBio(data.bio || "");
+          setProfilePicture(data.photoURL || profilePicture);
+        }
+      } catch (err) {
+        console.error("Error loading user:", err);
+      }
+    };
+
+    loadUser();
+  }, [currentUser]);
 
   const handleChangePicture = () => {
-    console.log("Change picture pressed");
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      
+      if (file.size > 1024 * 1024) {
+        Alert.alert("Error", "Please select an image smaller than 1MB");
+        return;
+      }
+      
+      setUploading(true);
+      
+      try {
+      
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const base64Image = event.target.result;
+          setProfilePicture(base64Image);
+          setUploading(false);
+        };
+        reader.onerror = () => {
+          Alert.alert("Error", "Failed to process image");
+          setUploading(false);
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Error:", error);
+        Alert.alert("Error", "Failed to process image");
+        setUploading(false);
+      }
+    };
+    
+    input.click();
+  };
+
+  const handleSave = async () => {
+    if (!currentUser) {
+      Alert.alert("Error", "No user logged in");
+      return;
+    }
+
+    try {
+      await updateDoc(doc(db, "users", currentUser.uid), {
+        firstname: firstName,
+        lastname: lastName,
+        bio,
+        photoURL: profilePicture,
+      });
+
+      Alert.alert("Success", "Profile updated successfully!");
+      router.replace("/profile");
+    } catch (err) {
+      console.error("Error saving profile:", err);
+      Alert.alert("Error", "Failed to save profile.");
+    }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.avatarSection}>
         <Image source={{ uri: profilePicture }} style={styles.avatar} />
-        <TouchableOpacity style={styles.changePicBtn} onPress={handleChangePicture}>
+        <TouchableOpacity
+          style={[styles.changePicBtn, uploading && styles.disabledBtn]}
+          onPress={handleChangePicture}
+          disabled={uploading}
+        >
           <Ionicons name="camera" size={24} color="#fff" />
-          <Text style={styles.changePicText}>Change Picture</Text>
+          <Text style={styles.changePicText}>
+            {uploading ? "Processing..." : "Change Picture"}
+          </Text>
         </TouchableOpacity>
+        <Text style={styles.noteText}>Note: Images stored locally</Text>
       </View>
 
       <View style={styles.form}>
         <Text style={styles.label}>First Name</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter first name"
           value={firstName}
           onChangeText={setFirstName}
         />
@@ -54,7 +137,6 @@ export default function EditProfile() {
         <Text style={styles.label}>Last Name</Text>
         <TextInput
           style={styles.input}
-          placeholder="Enter last name"
           value={lastName}
           onChangeText={setLastName}
         />
@@ -62,7 +144,6 @@ export default function EditProfile() {
         <Text style={styles.label}>Bio</Text>
         <TextInput
           style={[styles.input, styles.bioInput]}
-          placeholder="Write something about yourself"
           value={bio}
           onChangeText={setBio}
           multiline
@@ -92,13 +173,6 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
-  header: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#8B0000",
-    marginBottom: 20,
-    alignSelf: "flex-start",
-  },
   avatarSection: {
     alignItems: "center",
     marginBottom: 30,
@@ -119,10 +193,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 12,
   },
+  disabledBtn: {
+    backgroundColor: "#CCCCCC",
+  },
   changePicText: {
     color: "#fff",
     marginLeft: 8,
     fontSize: 14,
+  },
+  noteText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: "#666",
+    fontStyle: "italic",
   },
   form: {
     width: "100%",
