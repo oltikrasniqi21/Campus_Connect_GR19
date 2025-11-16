@@ -38,7 +38,7 @@ export default function Profile() {
         const userSnap = await getDoc(userDocRef);
         if (userSnap.exists()) {
           const data = userSnap.data();
-          setUser({ ...currentUser, firstname: data.firstname, lastname: data.lastname, bio: data.bio || "", photoURL: data.photoURL | currentUser.photoURL });
+          setUser({ ...currentUser, firstname: data.firstname, lastname: data.lastname, bio: data.bio || "", photoURL: data.photoURL || currentUser.photoURL });
         } else {
           setUser(currentUser);
         }
