@@ -153,7 +153,11 @@ export default function Profile() {
 
           <View style={styles.gridContainer}>
             {posts.map((post) => (
-              <TouchableOpacity key={post.id} style={styles.postItem}>
+              <TouchableOpacity
+  key={post.id}
+  style={styles.postItem}
+  onPress={() => router.push(`/eventDetail/${post.id}`)}
+>
                  {post.eventPhoto ? (
             <Image source={{ uri: post.eventPhoto }} style={styles.postImage} />
           ) : (
@@ -197,7 +201,7 @@ export default function Profile() {
 
             <TouchableOpacity style={styles.menuItem}>
               <Feather name="edit" size={22} color="#fff" />
-              <Text style={styles.menuText}>Edit Account Details</Text>
+              <Text style={styles.menuText} onPress={() => router.push("/editProfile")}>Edit Profile Details</Text>
             </TouchableOpacity>
 
             <View style={styles.spacer} />
