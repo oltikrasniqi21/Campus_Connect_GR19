@@ -103,6 +103,6 @@ const styles = StyleSheet.create({
   headerText: {
     color: "#fff",
     fontWeight: "bold",
-    fontFamily: "SpaceMono",
+    fontFamily: "Montserrat",
   },
 });

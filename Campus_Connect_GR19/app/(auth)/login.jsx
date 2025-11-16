@@ -28,7 +28,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
- const redirectUri = AuthSession.makeRedirectUri({
+  const redirectUri = AuthSession.makeRedirectUri({
     useProxy: true,
   });
 
@@ -46,8 +46,7 @@ export default function Login() {
     redirectUri,
   });
 
-
-useEffect(() => {
+  useEffect(() => {
     const handleResponse = async () => {
       if (response?.type === "success") {
         try {
@@ -140,22 +139,12 @@ useEffect(() => {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[
-            styles.btn,
-            {
-              backgroundColor: "#DB4437",
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-            },
-          ]}
+          style={[styles.googleBtn, !request && { opacity: 0.6 }]}
           disabled={!request}
           onPress={() => promptAsync()}
         >
-          <AntDesign name="google" size={20} color="white" />
-          <Text style={[styles.btnText, { marginLeft: 8 }]}>
-            Sign in with Google
-          </Text>
+          <AntDesign name="google" size={22} color="white" />
+          <Text style={styles.googleBtnText}>Sign in with Google</Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/signup")}>
@@ -249,5 +238,28 @@ const styles = StyleSheet.create({
     color: "red",
     marginBottom: 10,
     textAlign: "center",
+  },
+  googleBtn: {
+    backgroundColor: "#4285F4", // Google Blue
+    paddingVertical: 14,
+    borderRadius: 12,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    marginTop: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+    marginBottom: 20,
+  },
+
+  googleBtnText: {
+    color: "#fff",
+    fontSize: 16,
+    marginLeft: 10,
+    fontWeight: "700",
   },
 });

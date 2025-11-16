@@ -71,7 +71,7 @@ export default function PostLFItem() {
         postedBy: auth.currentUser.email,
         pfp: auth.currentUser.photoURL || `https://i.pravatar.cc/150?u=${auth.currentUser.uid}`,
         postedTime: Timestamp.now(),
-        photo: photo || "https://i.imgur.com/2nCt3Sbl.jpg",
+        photo: photo || "https://picsum.photos/200/200?random=3",
       });
 
       setModalVisible(true);

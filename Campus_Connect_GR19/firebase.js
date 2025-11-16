@@ -7,15 +7,14 @@ import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey:
+  apiKey: 
   authDomain: 
-  projectId: 
+  projectId:
   storageBucket: 
   messagingSenderId: 
   appId: 
   measurementId:
 };
-
 const app = initializeApp(firebaseConfig);
 
 const auth = initializeAuth(app);
