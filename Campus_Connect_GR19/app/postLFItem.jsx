@@ -19,7 +19,7 @@ import {
   collection,
   Timestamp,
 } from "firebase/firestore";
-
+import { doc, getDoc } from "firebase/firestore";
 
 export default function PostLFItem() {
   const router = useRouter();
@@ -61,6 +61,14 @@ export default function PostLFItem() {
     setError("");
 
     try {
+      const userDocRef = doc(db, "users", auth.currentUser.uid);
+    const userSnap = await getDoc(userDocRef);
+    let postedByName = auth.currentUser.email;
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      postedByName = `${userData.firstname} ${userData.lastname}`;
+    }
+
       await addDoc(collection(db, "lost_found_items"), {
         title,
         description,
@@ -68,7 +76,7 @@ export default function PostLFItem() {
         additionalInfo,
         status: postType,
         userId: auth.currentUser.uid,
-        postedBy: auth.currentUser.email,
+        postedBy: postedByName,
         pfp: auth.currentUser.photoURL || `https://i.pravatar.cc/150?u=${auth.currentUser.uid}`,
         postedTime: Timestamp.now(),
         photo: photo || "https://picsum.photos/200/200?random=3",
