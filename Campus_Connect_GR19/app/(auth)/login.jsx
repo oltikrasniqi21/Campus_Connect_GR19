@@ -35,13 +35,13 @@ export default function Login() {
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId:
-      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
+      "251230976026-qt0nheguj7bpveenkbqj46k0mrl9d8r7.apps.googleusercontent.com",
     expoClientId:
-      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
+      "251230976026-qt0nheguj7bpveenkbqj46k0mrl9d8r7.apps.googleusercontent.com",
     iosClientId:
-      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
+      "251230976026-qt0nheguj7bpveenkbqj46k0mrl9d8r7.apps.googleusercontent.com",
     androidClientId:
-      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
+      "251230976026-qt0nheguj7bpveenkbqj46k0mrl9d8r7.apps.googleusercontent.com",
     responseType: "id_token",
     scopes: ["profile", "email"],
     redirectUri,
