@@ -1,12 +1,13 @@
-import { TouchableOpacity, StyleSheet, Text, View, Modal, Pressable, FlatList, TextInput } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import { 
+  TouchableOpacity, StyleSheet, Text, View, Modal, Pressable, FlatList, TextInput 
+} from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Entypo, Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { Dimensions } from "react-native";
-import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
-import { db } from '../../firebase';
+import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot, query, where } from "firebase/firestore";
+import { db, auth } from '../../firebase';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
 
 const { width } = Dimensions.get("window");
 
@@ -17,50 +18,71 @@ export function Flashcard({ id, title, date, time, location }) {
     const [newFolderModalVisible, setNewFolderModalVisible] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
 
-    useFocusEffect(
-    useCallback(() => {
-        checkSaved(); 
-    }, [id])
-);
-
     const checkSaved = async () => {
         try {
+            const user = auth.currentUser;
+            if (!user) return setSaved(false);
+
             const eventSnap = await getDoc(doc(db, "saved_events", id));
-            setSaved(eventSnap.exists());
+            setSaved(eventSnap.exists() && eventSnap.data().savedBy === user.uid);
         } catch (error) {
             console.error("Error checking saved event:", error);
         }
     };
+
+    useFocusEffect(
+        useCallback(() => {
+            checkSaved(); 
+        }, [id])
+    );
 
     useEffect(() => {
         checkSaved();
     }, [id]);
 
     useEffect(() => {
-        const foldersRef = collection(db, "folders");
-        const unsub = onSnapshot(foldersRef, snapshot => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setFolders(data);
-        });
-        return () => unsub();
-    }, []);
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const foldersRef = collection(db, "folders");
+    const q = query(foldersRef, where("createdBy", "==", user.uid));
+
+    const unsub = onSnapshot(q, snapshot => {
+        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setFolders(data);
+    });
+
+    return () => unsub();
+}, []);
+
 
     const toggleSave = async () => {
         try {
+            const user = auth.currentUser;
+            if (!user) return;
+
             const eventRef = doc(db, "saved_events", id);
 
             if (saved) {
                 await deleteDoc(eventRef);
+
                 const foldersSnap = await getDocs(collection(db, "folders"));
                 for (const folderDoc of foldersSnap.docs) {
                     const postRef = doc(db, "folders", folderDoc.id, "folder_posts", id);
                     const postSnap = await getDoc(postRef);
-                    if (postSnap.exists()) await deleteDoc(postRef);
+                    if (postSnap.exists() && postSnap.data().savedBy === user.uid) {
+                        await deleteDoc(postRef);
+                    }
                 }
                 setSaved(false);
             } else {
                 await setDoc(eventRef, {
-                    id, title, date, time, location,
+                    id,
+                    title,
+                    date,
+                    time,
+                    location,
+                    savedBy: user.uid,
                     savedAt: new Date()
                 });
                 setSaved(true);
@@ -72,6 +94,9 @@ export function Flashcard({ id, title, date, time, location }) {
 
     const saveToFolder = async (folderId) => {
         try {
+            const user = auth.currentUser;
+            if (!user) return;
+
             const postRef = doc(db, "folders", folderId, "folder_posts", id);
             await setDoc(postRef, {
                 id,
@@ -79,6 +104,7 @@ export function Flashcard({ id, title, date, time, location }) {
                 date,
                 time,
                 location,
+                savedBy: user.uid,
                 savedAt: new Date()
             });
 
@@ -89,6 +115,7 @@ export function Flashcard({ id, title, date, time, location }) {
                 date,
                 time,
                 location,
+                savedBy: user.uid,
                 savedAt: new Date()
             });
 
@@ -100,19 +127,22 @@ export function Flashcard({ id, title, date, time, location }) {
     };
 
     const createNewFolder = async () => {
-        if (!newFolderName.trim()) return;
-        try {
-            const folderRef = doc(collection(db, "folders"));
-            await setDoc(folderRef, {
-                name: newFolderName.trim(),
-                createdAt: new Date()
-            });
-            setNewFolderName("");
-            setNewFolderModalVisible(false);
-        } catch (error) {
-            console.error("Error creating folder:", error);
-        }
-    };
+    const user = auth.currentUser;
+    if (!user || !newFolderName.trim()) return;
+
+    try {
+        const folderRef = doc(collection(db, "folders"));
+        await setDoc(folderRef, {
+            name: newFolderName.trim(),
+            createdAt: new Date(),
+            createdBy: user.uid   
+        });
+        setNewFolderName("");
+        setNewFolderModalVisible(false);
+    } catch (error) {
+        console.error("Error creating folder:", error);
+    }
+};
 
     return (
         <View style={styles.container}>
@@ -147,7 +177,6 @@ export function Flashcard({ id, title, date, time, location }) {
                 </TouchableOpacity>
             </View>
 
-            {/* Folder selection modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -197,7 +226,6 @@ export function Flashcard({ id, title, date, time, location }) {
                 </View>
             </Modal>
 
-            {/* New folder modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
