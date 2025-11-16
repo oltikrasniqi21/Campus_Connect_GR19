@@ -1,24 +1,24 @@
-import {
-  StyleSheet,
-  Text,
-  View,
-  TextInput,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-} from "react-native";
-import React, { useState, useEffect } from "react";
+import { AntDesign } from "@expo/vector-icons";
+import * as AuthSession from "expo-auth-session";
+import * as Google from "expo-auth-session/providers/google";
 import { router } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 import {
-  signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithCredential,
+  signInWithEmailAndPassword,
 } from "firebase/auth";
+import { useEffect, useState } from "react";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { auth } from "../../firebase";
-import { AntDesign } from "@expo/vector-icons";
-import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
-import * as AuthSession from "expo-auth-session";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -34,13 +34,13 @@ export default function Login() {
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId:
-      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
     expoClientId:
-      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
     iosClientId:
-      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
     androidClientId:
-      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
     responseType: "id_token",
     scopes: ["profile", "email"],
     redirectUri,
