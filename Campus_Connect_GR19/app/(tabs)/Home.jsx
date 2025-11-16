@@ -1,19 +1,20 @@
-import { StyleSheet, ScrollView } from "react-native";
+import { ScrollView, StyleSheet } from "react-native";
 
-import EditScreenInfo from "@/components/EditScreenInfo";
-import { Text, View } from "react-native";
-import { Link } from "expo-router";
 import { Flashcard } from "@/components/Homepage/flashcards.jsx";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { screenWidth } from "./_layout";
 import { router } from "expo-router";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { Text, View } from "react-native";
 import { auth } from "../../firebase";
+import { screenWidth } from "./_layout";
+import { db } from "../../firebase";
 
 export default function TabOneScreen() {
   const [userEmail, setUserEmail] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [events, setEvents] = useState([]);
+
 
   useEffect(() => {
     setLoading(true);
@@ -29,6 +30,30 @@ export default function TabOneScreen() {
     return () => userState();
   }, []);
 
+    useEffect(() => {
+      const ref = collection(db, "events");
+
+      const unsub = onSnapshot(ref, (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setEvents(data);
+      });
+
+      return unsub;
+    }, []);
+
+  const loadEvents = (user, setEvents) => {
+    const eventsRef = collection(db, "events");
+    const q = query(eventsRef, orderBy("createdAt", "desc"));
+
+    return onSnapshot(q, (snapshot) => {
+      const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setevents(events);
+    });
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -43,24 +68,25 @@ export default function TabOneScreen() {
 
       <ScrollView style={styles.eventsContainer}>
         <Text style={styles.sectionTitle}>Eventet Aktuale!</Text>
-        <Flashcard
-          title={"Festival"}
-          date={"10 tetor"}
-          time={"10:00-15:00"}
-          location={"FIEK"}
-        />
-        <Flashcard
-          title={"Festival"}
-          date={"10 tetor"}
-          time={"10:00-15:00"}
-          location={"FIEK"}
-        />
-        <Flashcard
-          title={"Festival"}
-          date={"10 tetor"}
-          time={"10:00-15:00"}
-          location={"FIEK"}
-        />
+          {events.map((event) => {
+            const date = event.date?.toDate?.() 
+            ? event.date.toDate().toLocaleDateString()
+            : "No date";
+
+          const time = event.time?.toDate?.()
+          ? event.time.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : event.time || "No time";
+
+          return (
+            <Flashcard
+              key={event.id}
+              title={event.title}
+              date={date}
+              time={time}
+              location={event.location}
+            />
+          )
+        })}
       </ScrollView>
     </View>
   );
