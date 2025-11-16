@@ -12,6 +12,10 @@ import React, { useState } from "react";
 import { auth } from "../../firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { router } from "expo-router";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../../firebase.js"; 
+
+
 
 export default function Signup() {
   const [email, setEmail] = useState("");
@@ -20,12 +24,27 @@ export default function Signup() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [firstname, setFirstname] = useState("");
+  const [lastname, setLastname] = useState("");
 
   const validateInputs = () => {
-    if (!email.trim() || !password.trim() || !confirmPassword.trim()) {
+    if (!firstname.trim() || !lastname.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
       setError("All fields are required.");
       return false;
     }
+
+    const nameRegex = /^[A-Za-z]{2,30}$/;
+
+    if (!nameRegex.test(firstname)) {
+      setError("First name must contain only letters and no numbers.");
+      return false;
+    }
+
+    if (!nameRegex.test(lastname)) {
+      setError("Last name must contain only letters and no numbers.");
+      return false;
+    }
+
 
     const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
     if (!emailRegex.test(email)) {
@@ -52,8 +71,16 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
-      setLoading(false);
+     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+       const user = userCredential.user;
+    await setDoc(doc(db, "users", user.uid), {
+      u_id: user.uid,
+      firstname,
+      lastname,
+      email: user.email,
+    });
+   
+     setLoading(false);
       setModalVisible(true);
     } catch (error) {
       console.log("error", error);
@@ -80,6 +107,21 @@ export default function Signup() {
       </View>
 
       <View style={styles.card}>
+        <TextInput
+          placeholder="First Name"
+          placeholderTextColor="#9A9A9A"
+          value={firstname}
+          onChangeText={setFirstname}
+          style={styles.input}
+        />
+        <TextInput
+          placeholder="Last Name"
+          placeholderTextColor="#9A9A9A"
+          value={lastname}
+          onChangeText={setLastname}
+          style={styles.input}
+        />
+
         <TextInput
           placeholder="Email"
           placeholderTextColor="#9A9A9A"

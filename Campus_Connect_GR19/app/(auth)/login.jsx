@@ -18,7 +18,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { auth } from "../../firebase";
+import { auth, db} from "../../firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -58,7 +59,19 @@ export default function Login() {
           }
 
           const credential = GoogleAuthProvider.credential(id_token);
-          await signInWithCredential(auth, credential);
+          const userCredential = await signInWithCredential(auth, credential);
+          const user = userCredential.user;
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            await setDoc(userRef, {
+              u_id: user.uid, 
+              firstname: user.displayName?.split(" ")[0] || "",
+              lastname: user.displayName?.split(" ").slice(1).join(" ") || "", 
+              email: user.email,
+            });
+          }
+
           router.push("/");
         } catch (err) {
           console.error(err);

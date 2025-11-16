@@ -16,6 +16,8 @@ import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { auth } from "../../firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase";
 
 const { width } = Dimensions.get("window");
 
@@ -27,12 +29,21 @@ export default function Profile() {
   const currentUser = auth.currentUser;
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          setUser({ ...currentUser, firstname: data.firstname, lastname: data.lastname });
+        }
+      }
     });
 
     return () => unsubscribe();
   }, []);
+
 
   const handleSignOut = async () => {
     try {
@@ -83,14 +94,16 @@ export default function Profile() {
         />
 
         <View style={styles.nameRow}>
-          <Text style={styles.fullName}>John Doe</Text> {/* Replace with currentUser.firstName + currentUser.lastName later */}
+          <Text style={styles.fullName}>
+            {user?.firstname && user?.lastname ? `${user.firstname} ${user.lastname}` : "User"}
+          </Text>
           <TouchableOpacity
             style={styles.editIcon}
             onPress={() => router.push("/editProfile")}
           >
             <Ionicons name="pencil" size={20} color="#D40000" />
           </TouchableOpacity>
-          
+
         </View>
         <Text style={styles.name}>{currentUser.email}</Text>
         <Text style={styles.subtitle}>
@@ -225,14 +238,14 @@ const styles = StyleSheet.create({
     color: "#656565",
   },
   fullName: {
-  fontSize: 22, 
-  fontWeight: "bold",
-  color: "#656565",
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#656565",
   },
   email: {
-  fontSize: 16,
-  color: "#898580",
-  marginTop: 4,
+    fontSize: 16,
+    color: "#898580",
+    marginTop: 4,
   },
   editIcon: {
     marginLeft: 8,

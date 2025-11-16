@@ -2,7 +2,7 @@ import { ScrollView, StyleSheet } from "react-native";
 
 import { Flashcard } from "@/components/Homepage/flashcards.jsx";
 import { router } from "expo-router";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query, doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
 import { auth } from "../../firebase";
@@ -12,37 +12,45 @@ import { db } from "../../firebase";
 export default function TabOneScreen() {
   const [userEmail, setUserEmail] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [userName, setUserName] = useState("");
   const [events, setEvents] = useState([]);
-
 
   useEffect(() => {
     setLoading(true);
-    const userState = auth.onAuthStateChanged((user) => {
+
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         setUserEmail(user.email);
+        const userDocRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userDocRef);
+        if (userSnap.exists()) {
+          const data = userSnap.data();
+          setUserName(`${data.firstname} ${data.lastname}`); 
+        } else {
+          setUserName("User");
+        }
       } else {
         router.replace("/login");
       }
       setLoading(false);
     });
 
-    return () => userState();
+    return () => unsubscribe();
   }, []);
 
-    useEffect(() => {
-      const ref = collection(db, "events");
+  useEffect(() => {
+    const ref = collection(db, "events");
 
-      const unsub = onSnapshot(ref, (snapshot) => {
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setEvents(data);
-      });
+    const unsub = onSnapshot(ref, (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setEvents(data);
+    });
 
-      return unsub;
-    }, []);
+    return unsub;
+  }, []);
 
   const loadEvents = (user, setEvents) => {
     const eventsRef = collection(db, "events");
@@ -64,18 +72,18 @@ export default function TabOneScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.welcome}>Welcome, {userEmail || "User"}</Text>
+      <Text style={styles.welcome}>Welcome, {userName || "User"}</Text>
 
       <ScrollView style={styles.eventsContainer}>
         <Text style={styles.sectionTitle}>Eventet Aktuale!</Text>
-          {events.map((event) => {
-            const date = event.date?.toDate?.() 
+        {events.map((event) => {
+          const date = event.date?.toDate?.()
             ? event.date.toDate().toLocaleDateString()
             : "No date";
 
           const time = event.time?.toDate?.()
-          ? event.time.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          : event.time || "No time";
+            ? event.time.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : event.time || "No time";
 
           return (
             <Flashcard
@@ -115,7 +123,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 10,
   },
-   welcome: {
+  welcome: {
     fontSize: 22,
     fontWeight: "700",
     color: "#820D0D",
