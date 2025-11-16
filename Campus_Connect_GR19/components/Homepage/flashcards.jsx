@@ -44,7 +44,6 @@ export function Flashcard({ id, title, date, time, location }) {
     }, [id])
   );
 
-    // Fetch folders from Firebase
     useEffect(() => {
         const fetchFolders = async () => {
             try {

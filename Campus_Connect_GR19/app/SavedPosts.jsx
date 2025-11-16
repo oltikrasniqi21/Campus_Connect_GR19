@@ -43,11 +43,19 @@ export default function SavedPosts() {
   };
 
   const renderFolder = ({ item }) => (
-    <TouchableOpacity style={styles.folderCard} key={item.id} onPress={() => openFolder(item)}>
-      <Text style={styles.folderTitle}>{item.name}</Text>
-      <Text style={styles.folderSubtitle}>Folder</Text>
-    </TouchableOpacity>
-  );
+  <TouchableOpacity style={styles.folderCard} key={item.id} onPress={() => openFolder(item)}>
+    <View style={styles.folderContent}>
+      <View>
+        <Text style={styles.folderTitle}>{item.name}</Text>
+        <Text style={styles.folderSubtitle}>Folder</Text>
+      </View>
+
+      <TouchableOpacity style={styles.editButton} onPress={() => console.log("Edit pressed")}>
+        <Text style={styles.editButtonText}>Edit</Text>
+      </TouchableOpacity>
+    </View>
+  </TouchableOpacity>
+);
 
   return (
     <View style={styles.container}>
@@ -84,14 +92,43 @@ const styles = StyleSheet.create({
   header: { fontSize: 22, fontWeight: "800", color: '#8B0000', marginBottom: 15 },
   columnWrapper: { justifyContent: "space-between", marginBottom: 10 },
   folderCard: {
-    backgroundColor: '#c5c5c5ff',
-    padding: 20,
-    borderRadius: 15,
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 20,
     flex: 1,
     marginHorizontal: 5,
     height: 100,
-    justifyContent: "space-between",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 5,
+    elevation: 4,
   },
-  folderTitle: { fontWeight: "bold", fontSize: 16, color: '#333333' },
-  folderSubtitle: { fontSize: 12, color: '#666666' },
+  folderContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  folderTitle: { 
+    fontWeight: "bold", 
+    fontSize: 16, 
+    color: '#333333' 
+  },
+  folderSubtitle: { 
+    fontSize: 12, 
+    color: '#666666', 
+    marginTop: 4 
+  },
+  editButton: {
+  backgroundColor: '#820d0d',
+  paddingVertical: 8,    // increased from 4
+  paddingHorizontal: 16, // increased from 12
+  borderRadius: 16,      // slightly bigger radius
+},
+editButtonText: {
+  color: '#fff',
+  fontWeight: '600',
+  fontSize: 14,          // increased from 12
+},
 });

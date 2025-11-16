@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, Platform, StatusBar } from "react-native";
 import { useLocalSearchParams } from 'expo-router';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Flashcard } from '../../components/Homepage/flashcards.jsx';
 
@@ -9,25 +9,21 @@ export default function FolderScreen() {
   const { id } = useLocalSearchParams(); 
   const [posts, setPosts] = useState([]);
 
-  // Fetch posts from folder_posts subcollection
   useEffect(() => {
-    const fetchFolderPosts = async () => {
-      try {
-        const postsSnapshot = await getDocs(
-          collection(db, "folders", id, "folder_posts")
-        );
-        const data = postsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setPosts(data);
-      } catch (error) {
-        console.error("Error fetching folder posts:", error);
-      }
-    };
+  const folderRef = collection(db, "folders", id, "folder_posts");
 
-    fetchFolderPosts();
-  }, [id]);
+  const unsubscribe = onSnapshot(folderRef, (snapshot) => {
+    const data = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    setPosts(data);
+  }, (error) => {
+    console.error("Error fetching folder posts:", error);
+  });
+
+  return () => unsubscribe();
+}, [id]);
 
   return (
     <View style={styles.container}>
