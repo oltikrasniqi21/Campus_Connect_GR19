@@ -81,11 +81,16 @@ export default function Profile() {
           style={styles.avatar}
         />
         <View style={styles.nameRow}>
-          <Text style={styles.name}>{currentUser.email}</Text>
-          <TouchableOpacity style={styles.editIcon}>
+          <Text style={styles.fullName}>John Doe</Text> {/* Replace with currentUser.firstName + currentUser.lastName later */}
+          <TouchableOpacity
+            style={styles.editIcon}
+            onPress={() => router.push("/editProfile")}
+          >
             <Ionicons name="pencil" size={20} color="#D40000" />
           </TouchableOpacity>
+          
         </View>
+        <Text style={styles.name}>{currentUser.email}</Text>
         <Text style={styles.subtitle}>
           Student Ne Fakultetin e Inxhinierise Kompjuterike
         </Text>
@@ -216,6 +221,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "bold",
     color: "#656565",
+  },
+  fullName: {
+  fontSize: 22, 
+  fontWeight: "bold",
+  color: "#656565",
+  },
+  email: {
+  fontSize: 16,
+  color: "#898580",
+  marginTop: 4,
   },
   editIcon: {
     marginLeft: 8,

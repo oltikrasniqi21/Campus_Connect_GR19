@@ -75,6 +75,10 @@ function RootLayoutNav() {
           name="SavedFolder/[id]"
           options={sharedHeaderOptions("Folder")}
         />
+          <Stack.Screen
+          name="editProfile"
+          options={sharedHeaderOptions("Edit Profile")} 
+        />
         <Stack.Screen name="(auth)/signup" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
       </Stack>
