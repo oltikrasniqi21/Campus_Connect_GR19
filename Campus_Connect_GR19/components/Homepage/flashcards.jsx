@@ -17,25 +17,36 @@ export function Flashcard({ id, title, date, time, location }) {
     const [newFolderName, setNewFolderName] = useState("");
 
     const checkSaved = async () => {
-        try {
-            const eventSnap = await getDoc(doc(db, "saved_events", id));
-            setSaved(eventSnap.exists());
-        } catch (error) {
-            console.error("Error checking saved event:", error);
+    try {
+        const user = auth.currentUser;
+        if (!user) {
+            setSaved(false);
+            return;
         }
-    };
-
-    useEffect(() => { checkSaved(); }, [id]);
-    useFocusEffect(useCallback(() => { checkSaved(); }, [id]));
+        
+        const eventSnap = await getDoc(doc(db, "saved_events", id));
+        setSaved(eventSnap.exists() && eventSnap.data().savedBy === user.uid);
+    } catch (error) {
+        console.error("Error checking saved event:", error);
+    }
+};
 
     useEffect(() => {
-        const foldersRef = collection(db, "folders");
-        const unsub = onSnapshot(foldersRef, snapshot => {
-            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setFolders(data);
-        });
-        return () => unsub();
-    }, []);
+    const user = auth.currentUser;
+    if (!user) {
+        setFolders([]);
+        return;
+    }
+    
+    const foldersRef = collection(db, "folders");
+    const unsub = onSnapshot(foldersRef, snapshot => {
+        const data = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(folder => folder.createdBy === user.uid);
+        setFolders(data);
+    });
+    return () => unsub();
+}, []);
 
     const toggleSave = async () => {
         try {
