@@ -6,7 +6,7 @@ import { Dimensions } from "react-native";
 const { width } = Dimensions.get("window");
 
 
-export function Flashcard({title, date, time, location}){
+export function Flashcard({id, title, date, time, location}){
   return (
     <View style={styles.container}>
         <View style={styles.leftSection}>
@@ -16,7 +16,7 @@ export function Flashcard({title, date, time, location}){
 
             
         <TouchableOpacity activeOpacity={0.7} >
-            <Link href={'/EventDetails'} style={styles.seeMoreLink}>
+            <Link href={`../../app/eventDetail/${id}`} style={styles.seeMoreLink}>
                 <View style={styles.seeMoreButton}>
                     <Text style={styles.seeMoreText}>See More</Text>
                     <Entypo name="chevron-right" size={width * 0.085} color="#fcfcfc" />

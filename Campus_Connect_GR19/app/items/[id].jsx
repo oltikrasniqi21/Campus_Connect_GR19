@@ -55,15 +55,17 @@ export default function ItemDetails() {
           </Text>
         </View>
 
-        <View style={styles.postedByContainer}>
-          <Image
-            source={require("../../assets/images/pfp.png")}
-            style={styles.profileImage}
-          />
-          <View>
-            <Text style={styles.postedByText}>Posted by {params.postedBy}</Text>
-            <Text style={styles.postedTime}>{params.postedTime}</Text>
+        <View style={styles.posterWrapper}>
+          <View style={styles.posterRow}>
+            <Image source={{ uri: params.pfp }} style={styles.posterImage} />
+
+            <View style={{ marginLeft: 12 }}>
+              <Text style={styles.posterName}>{params.postedBy}</Text>
+              <Text style={styles.posterTime}>{params.postedTime}</Text>
+            </View>
           </View>
+
+          <View style={styles.divider} />
         </View>
 
         <View style={styles.actions}>
@@ -80,96 +82,181 @@ export default function ItemDetails() {
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
   },
+
   scrollContent: {
     paddingHorizontal: 20,
+    paddingBottom: 40,
   },
+
   image: {
     width: "100%",
-    height: 240,
-    borderRadius: 12,
+    height: 260,
+    borderRadius: 16,
     resizeMode: "cover",
-    marginBottom: 15,
+    marginBottom: 20,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 8,
   },
-  content: { paddingBottom: 10 },
+
+  content: { 
+    paddingBottom: 10,
+  },
+
   statusBadge: {
     alignSelf: "flex-start",
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+
+  statusText: {
+    fontWeight: "700",
+    fontSize: 13,
+  },
+
+  itemTitle: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#111",
     marginBottom: 6,
   },
-  statusText: { fontWeight: "600" },
-  itemTitle: { fontSize: 18, fontWeight: "700", color: "#000" },
-  location: { color: "#820D0D", marginVertical: 4 },
-  description: {
-    color: "#555",
-    marginBottom: 12,
+
+  location: {
+    color: "#820D0D",
+    marginBottom: 10,
+    fontWeight: "600",
     fontSize: 14,
-    lineHeight: 20,
+  },
+
+  description: {
+    color: "#444",
+    marginBottom: 18,
+    fontSize: 15,
+    lineHeight: 22,
   },
 
   infoBox: {
-    backgroundColor: "#F5F5F5",
-    borderRadius: 10,
-    padding: 16,
-    marginTop: 10,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 16,
+    padding: 18,
+    marginTop: 15,
+    borderWidth: 1,
+    borderColor: "#E2E2E2",
   },
+
   infoTitle: {
     color: "#820D0D",
     fontWeight: "700",
-    marginBottom: 10,
-    fontSize: 15,
+    marginBottom: 12,
+    fontSize: 16,
   },
-  infoText: { color: "#333", fontSize: 14, lineHeight: 20 },
 
-  postedByContainer: {
+  infoText: { 
+    color: "#333", 
+    fontSize: 15, 
+    lineHeight: 22 
+  },
+  posterWrapper: {
+    marginTop: 25,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    backgroundColor: "#FAFAFA",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E2E2E2",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 4,
+  },
+
+  posterRow: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 25,
-    marginBottom: 10,
-  },
-  profileImage: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
-  postedByText: {
-    color: "#444",
-    fontWeight: "600",
-    fontSize: 15,
-    textAlign: "center",
-  },
-  postedTime: {
-    color: "#777",
-    fontSize: 12,
-    fontStyle: "italic",
-    textAlign: "center",
   },
 
-  actions: {
-    alignItems: "center",
-    marginTop: 20,
-    marginBottom: 40,
+  posterImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: "#eee",
   },
+
+  posterName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#333",
+  },
+
+  posterTime: {
+    fontSize: 12,
+    color: "#777",
+    marginTop: 3,
+  },
+
+  divider: {
+    height: 1,
+    backgroundColor: "#E4E4E4",
+    marginTop: 14,
+  },
+
+  /** ACTION BUTTONS **/
+  actions: {
+    marginTop: 35,
+    marginBottom: 70,
+    width: "100%",
+    paddingHorizontal: 4,
+  },
+
   callButton: {
     backgroundColor: "#820D0D",
-    width: "90%",
-    paddingVertical: 14,
-    borderRadius: 8,
+    width: "100%",
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 14,
+
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
   },
-  callText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+
+  callText: { 
+    color: "#fff", 
+    fontWeight: "700", 
+    fontSize: 17 
+  },
+
   messageButton: {
-    backgroundColor: "#D8D8D8",
-    width: "90%",
-    paddingVertical: 14,
-    borderRadius: 8,
+    backgroundColor: "#EFEFEF",
+    width: "100%",
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 5,
   },
-  messageText: { color: "#000", fontWeight: "600", fontSize: 16 },
+
+  messageText: { 
+    color: "#333", 
+    fontWeight: "700", 
+    fontSize: 17 
+  },
 });
+

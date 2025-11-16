@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 import { useColorScheme } from "@/components/useColorScheme";
 import { Text, StyleSheet, Dimensions } from "react-native";
+import { AuthProvider } from "../context/AuthContext";
 
 export const unstable_settings = {
   initialRouteName: "(tabs)",
@@ -47,12 +48,13 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
+    <AuthProvider>    
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
         <Stack.Screen
-          name="PostLFItem"
+          name="postLFItem"
           options={sharedHeaderOptions("Post Item")}
         />
         <Stack.Screen
@@ -83,6 +85,7 @@ function RootLayoutNav() {
         <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
       </Stack>
     </ThemeProvider>
+    </AuthProvider>
   );
 }
 
@@ -104,6 +107,6 @@ const styles = StyleSheet.create({
   headerText: {
     color: "#fff",
     fontWeight: "bold",
-    fontFamily: "SpaceMono",
+    fontFamily: "Montserrat",
   },
 });

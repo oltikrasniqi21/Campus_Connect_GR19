@@ -12,39 +12,79 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
+import  ConfirmModal  from "../components/ConfirmModal.jsx";
+import {db} from "../firebase"
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 
 export default function AddEvent() {
   const router = useRouter();
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+
 
   const [eventTitle, setEventTitle] = useState("");
-  const [eventDate, setEventDate] = useState(""); 
-  const [eventTime, setEventTime] = useState(""); 
+  const [eventDate, setEventDate] = useState(new Date());
+  const [eventTime, setEventTime] = useState(new Date());
   const [eventLocation, setEventLocation] = useState("");
   const [eventDescription, setEventDescription] = useState("");
-  const [contactInfo, setContactInfo] = useState("");
 
-  const handleSubmit = () => {
-    if (!eventTitle.trim() || !eventDate.trim() || !eventTime.trim()) {
-      alert("Please fill in the Title, Date, and Time fields.");
+  const [error, setError] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState("")
+  const [modalMessage, setModalMessage] = useState("")
+
+  //perdoret vetem me krahasu nese koha eventit eshte me e madhe se data aktuale
+  const eventDateTime = new Date(
+      eventDate.getFullYear(),
+      eventDate.getMonth(),
+      eventDate.getDate(),
+      eventTime.getHours(),
+      eventTime.getMinutes()
+  );
+
+  const addEvent = async () => {
+    if (!eventTitle.trim() || !eventLocation.trim() || !eventDescription.trim()) {
+      setError("Please fill all fields!");
+      return;
+    }
+
+    if(eventDateTime < new Date()  || eventDateTime < new Date()){
+      setError("Data ose koha eshte vendosur gabim!");
       return;
     }
 
     const newEvent = {
-      id: Date.now().toString(),
       title: eventTitle,
       date: eventDate,
       time: eventTime,
       location: eventLocation,
       description: eventDescription,
-      contact: contactInfo,
     };
 
-    router.replace({
-      pathname: "/(tabs)/Home",
-      params: { newEvent: JSON.stringify(newEvent) },
-    });
+    try{
+      await addDoc(collection(db, "events"), newEvent);
+      
+      setModalVisible(true);
+      setModalType("success");
+      setModalMessage("Event created successfully!");
+
+      setError("");
+      setEventTitle("");
+      setEventDate(new Date());
+      setEventTime(new Date());
+      setEventLocation("");
+      setEventDescription("");
+    }catch(error){
+      console.error("Error adding event: ", error);
+    }
   };
+
+  const handleModalClose = () => {
+        setModalVisible(false);
+  }
+
 
   return (
     <SafeAreaView style={styles.container}>
@@ -58,37 +98,82 @@ export default function AddEvent() {
         <TextInput
           style={styles.input}
           placeholder="p.sh Coding Workshop"
+          placeholderTextColor="gray"
           value={eventTitle}
           onChangeText={setEventTitle}
         />
         
         <View style={styles.dateTimeRow}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Data</Text>
+
+            {Platform.OS === "web" ? (
+              <input
+                type="date"
+                value={eventDate.toISOString().slice(0, 10)}
+                onChange={(e) => setEventDate(new Date(e.target.value))}
+                style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }}
+              />
+            ) : (
+                <TouchableOpacity style={styles.input} onPress={() => setShowDatePicker(true)}>
+                  <Text style={{color:"gray"}}>{eventDate.toLocaleDateString()}</Text>
+                </TouchableOpacity>
+            )}
+
+            {showDatePicker && (
+              <DateTimePicker
+                value={eventDate}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) setEventDate(selectedDate);
+                }}
+              />
+            )}
+          </View>
+
             <View style={styles.inputGroup}>
-                <Text style={styles.label}>Data</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="DD/MM/YYYY"
-                    value={eventDate}
-                    onChangeText={setEventDate}
-                    keyboardType="numeric"
+              <Text style={styles.label}>Koha</Text>
+
+              {Platform.OS === "web" ? (
+              <input
+                  type="time"
+                  value={eventTime.toTimeString().slice(0,5)}
+                  onChange={(e) => {
+                    const [hours, minutes] = e.target.value.split(":");
+                    const newTime = new Date(eventTime);
+                    newTime.setHours(hours);
+                    newTime.setMinutes(minutes);
+                    setEventTime(newTime);
+                  }}
+                  style={{ padding: 10, borderRadius: 8, border: "1px solid #ccc" }}
                 />
-            </View>
-            <View style={styles.inputGroup}>
-                <Text style={styles.label}>Koha</Text>
-                <TextInput
-                    style={styles.input}
-                    placeholder="HH:MM AM/PM"
-                    value={eventTime}
-                    onChangeText={setEventTime}
+              ) : (
+              <TouchableOpacity style={styles.input} onPress={() => setShowTimePicker(true)}>
+                <Text style={{color:"gray"}}>{eventTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</Text>
+              </TouchableOpacity>
+            )}
+
+              {showTimePicker && (
+                <DateTimePicker
+                  value={eventTime}
+                  mode="time"
+                  display="default"
+                  onChange={(event, selectedTime) => {
+                    setShowTimePicker(false);
+                    if (selectedTime) setEventTime(selectedTime);
+                  }}
                 />
+              )}
             </View>
         </View>
-
 
         <Text style={styles.label}>Lokacioni</Text>
         <TextInput
           style={styles.input}
           placeholder="p.sh FIEK, Prishtine"
+          placeholderTextColor="gray"
           value={eventLocation}
           onChangeText={setEventLocation}
         />
@@ -97,16 +182,24 @@ export default function AddEvent() {
         <TextInput
           style={[styles.input, { height: 120, textAlignVertical: 'top' }]}
           placeholder="Pershkruaj detajet e eventit, agjenden, dhe speakers."
+          placeholderTextColor="gray"
           multiline
           value={eventDescription}
           onChangeText={setEventDescription}
         />
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+        <TouchableOpacity style={styles.submitButton} onPress={addEvent}>
           <Ionicons name="calendar-sharp" size={20} color="#fff" style={{marginRight: 8}}/>
           <Text style={styles.submitText}>Shto Eventin</Text>
         </TouchableOpacity>
-        <View style={{ height: 50 }} />
+        {error ? <Text style={{color: 'red', fontSize: 18, textAlign:"center", marginTop: 10}}>{error}</Text> : null}
+        <ConfirmModal
+            visible={modalVisible}
+            type={modalType}
+            message={modalMessage}
+            onClose={handleModalClose}
+        />
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -158,7 +251,7 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#848484ff",
     borderRadius: 8,
     padding: 10,
     backgroundColor: "#fafafa",

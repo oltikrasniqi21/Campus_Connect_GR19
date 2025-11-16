@@ -7,16 +7,70 @@ import {
   Image,
   ScrollView,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { router } from "expo-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithCredential,
+} from "firebase/auth";
 import { auth } from "../../firebase";
+import { AntDesign } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
+import * as Google from "expo-auth-session/providers/google";
+import * as AuthSession from "expo-auth-session";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const redirectUri = AuthSession.makeRedirectUri({
+    useProxy: true,
+  });
+
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId:
+      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+    expoClientId:
+      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+    iosClientId:
+      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+    androidClientId:
+      "126981991336-t3e8udosa13rjvsvdbmo3tohc1cigfs1.apps.googleusercontent.com",
+    responseType: "id_token",
+    scopes: ["profile", "email"],
+    redirectUri,
+  });
+
+  useEffect(() => {
+    const handleResponse = async () => {
+      if (response?.type === "success") {
+        try {
+          setLoading(true);
+          const { id_token } = response.params;
+          if (!id_token) {
+            setError("Google authentication failed: missing ID token");
+            return;
+          }
+
+          const credential = GoogleAuthProvider.credential(id_token);
+          await signInWithCredential(auth, credential);
+          router.push("/");
+        } catch (err) {
+          console.error(err);
+          setError(err.message || "Failed to sign in with Google");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    handleResponse();
+  }, [response]);
 
   const validateInputs = () => {
     if (!email.trim() || !password.trim()) {
@@ -84,10 +138,19 @@ export default function Login() {
             {loading ? "Logging in..." : "Log In"}
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.googleBtn, !request && { opacity: 0.6 }]}
+          disabled={!request}
+          onPress={() => promptAsync()}
+        >
+          <AntDesign name="google" size={22} color="white" />
+          <Text style={styles.googleBtnText}>Sign in with Google</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.push("/signup")}>
           <Text style={styles.linkText}>
-            Don't have an account? <Text style={{ color: "#820D0D" }}>Sign Up</Text>
+            Don't have an account?{" "}
+            <Text style={{ color: "#820D0D" }}>Sign Up</Text>
           </Text>
         </TouchableOpacity>
       </View>
@@ -97,7 +160,7 @@ export default function Login() {
 
 const styles = StyleSheet.create({
   container: {
-    flex:1,
+    flex: 1,
     paddingHorizontal: 25,
     paddingBottom: 60,
     backgroundColor: "#ffffff",
@@ -175,5 +238,28 @@ const styles = StyleSheet.create({
     color: "red",
     marginBottom: 10,
     textAlign: "center",
+  },
+  googleBtn: {
+    backgroundColor: "#4285F4", // Google Blue
+    paddingVertical: 14,
+    borderRadius: 12,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    marginTop: 10,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
+    marginBottom: 20,
+  },
+
+  googleBtnText: {
+    color: "#fff",
+    fontSize: 16,
+    marginLeft: 10,
+    fontWeight: "700",
   },
 });
