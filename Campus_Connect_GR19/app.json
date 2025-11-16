@@ -12,9 +12,13 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Nevojitet lokacioni për të treguar rrugën tek fakulteti"
+      },
       "supportsTablet": true
     },
     "android": {
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
       "adaptiveIcon": {
         "backgroundColor": "#ffffff"
       },
@@ -25,11 +29,7 @@
       "bundler": "metro",
       "output": "static"
     },
-    "plugins": [
-      "expo-router",
-      "expo-font",
-      "expo-web-browser"
-    ],
+    "plugins": ["expo-router", "expo-font", "expo-web-browser"],
     "experiments": {
       "typedRoutes": true
     }
