@@ -1,11 +1,12 @@
 import { TouchableOpacity, StyleSheet, Text, View, Modal, Pressable, FlatList, TextInput } from 'react-native';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Entypo, Ionicons } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { Dimensions } from "react-native";
 import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, onSnapshot } from "firebase/firestore";
-import { db, auth } from '../../firebase';
+import { db } from '../../firebase';
 import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 
 const { width } = Dimensions.get("window");
 
@@ -16,42 +17,36 @@ export function Flashcard({ id, title, date, time, location }) {
     const [newFolderModalVisible, setNewFolderModalVisible] = useState(false);
     const [newFolderName, setNewFolderName] = useState("");
 
+    useFocusEffect(
+    useCallback(() => {
+        checkSaved(); 
+    }, [id])
+);
+
     const checkSaved = async () => {
-    try {
-        const user = auth.currentUser;
-        if (!user) {
-            setSaved(false);
-            return;
+        try {
+            const eventSnap = await getDoc(doc(db, "saved_events", id));
+            setSaved(eventSnap.exists());
+        } catch (error) {
+            console.error("Error checking saved event:", error);
         }
-        
-        const eventSnap = await getDoc(doc(db, "saved_events", id));
-        setSaved(eventSnap.exists() && eventSnap.data().savedBy === user.uid);
-    } catch (error) {
-        console.error("Error checking saved event:", error);
-    }
-};
+    };
 
     useEffect(() => {
-    const user = auth.currentUser;
-    if (!user) {
-        setFolders([]);
-        return;
-    }
-    
-    const foldersRef = collection(db, "folders");
-    const unsub = onSnapshot(foldersRef, snapshot => {
-        const data = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(folder => folder.createdBy === user.uid);
-        setFolders(data);
-    });
-    return () => unsub();
-}, []);
+        checkSaved();
+    }, [id]);
+
+    useEffect(() => {
+        const foldersRef = collection(db, "folders");
+        const unsub = onSnapshot(foldersRef, snapshot => {
+            const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setFolders(data);
+        });
+        return () => unsub();
+    }, []);
 
     const toggleSave = async () => {
         try {
-            const user = auth.currentUser;
-            if (!user) return;
             const eventRef = doc(db, "saved_events", id);
 
             if (saved) {
@@ -66,7 +61,6 @@ export function Flashcard({ id, title, date, time, location }) {
             } else {
                 await setDoc(eventRef, {
                     id, title, date, time, location,
-                    savedBy: user.uid,
                     savedAt: new Date()
                 });
                 setSaved(true);
@@ -78,9 +72,6 @@ export function Flashcard({ id, title, date, time, location }) {
 
     const saveToFolder = async (folderId) => {
         try {
-            const user = auth.currentUser;
-            if (!user) return;
-
             const postRef = doc(db, "folders", folderId, "folder_posts", id);
             await setDoc(postRef, {
                 id,
@@ -88,7 +79,6 @@ export function Flashcard({ id, title, date, time, location }) {
                 date,
                 time,
                 location,
-                savedBy: user.uid,
                 savedAt: new Date()
             });
 
@@ -99,7 +89,6 @@ export function Flashcard({ id, title, date, time, location }) {
                 date,
                 time,
                 location,
-                savedBy: user.uid,
                 savedAt: new Date()
             });
 
@@ -116,7 +105,6 @@ export function Flashcard({ id, title, date, time, location }) {
             const folderRef = doc(collection(db, "folders"));
             await setDoc(folderRef, {
                 name: newFolderName.trim(),
-                createdBy: auth.currentUser?.uid,
                 createdAt: new Date()
             });
             setNewFolderName("");
@@ -159,6 +147,7 @@ export function Flashcard({ id, title, date, time, location }) {
                 </TouchableOpacity>
             </View>
 
+            {/* Folder selection modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -208,6 +197,7 @@ export function Flashcard({ id, title, date, time, location }) {
                 </View>
             </Modal>
 
+            {/* New folder modal */}
             <Modal
                 animationType="slide"
                 transparent={true}
