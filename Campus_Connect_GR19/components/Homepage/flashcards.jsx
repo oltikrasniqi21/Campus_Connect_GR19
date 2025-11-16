@@ -127,7 +127,7 @@ export function Flashcard({ id, title, date, time, location }) {
 
             <View style={styles.rightSection}>
                 <TouchableOpacity activeOpacity={0.7}>
-                    <Link href={`../../app/eventDetail/${id}`} style={styles.seeMoreLink}>
+                    <Link href={`eventDetail/${id}`} style={styles.seeMoreLink}>
                         <View style={styles.seeMoreButton}>
                             <Text style={styles.seeMoreText}>See More</Text>
                             <Entypo name="chevron-right" size={width * 0.085} color="#fcfcfc" />
