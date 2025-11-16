@@ -29,6 +29,7 @@ export default function AddEvent() {
   const [eventTime, setEventTime] = useState(new Date());
   const [eventLocation, setEventLocation] = useState("");
   const [eventDescription, setEventDescription] = useState("");
+  const [eventPublisher, setEventPublisher] = useState("");
 
   const [error, setError] = useState("");
   const [modalVisible, setModalVisible] = useState(false);

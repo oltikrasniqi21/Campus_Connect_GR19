@@ -18,7 +18,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { auth } from "../../firebase";
+import { auth, db} from "../../firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -34,13 +35,13 @@ export default function Login() {
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     webClientId:
-      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
+      "251230976026-pofovdcbiivfo5o0o9frqcf0ig3v82fr.apps.googleusercontent.com",
     expoClientId:
-      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
+      "251230976026-pofovdcbiivfo5o0o9frqcf0ig3v82fr.apps.googleusercontent.com",
     iosClientId:
-      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
+      "251230976026-pofovdcbiivfo5o0o9frqcf0ig3v82fr.apps.googleusercontent.com",
     androidClientId:
-      "251230976026-m6i4ra64t3ub8eq8f028e8vgc7k704vb.apps.googleusercontent.com",
+      "251230976026-pofovdcbiivfo5o0o9frqcf0ig3v82fr.apps.googleusercontent.com",
     responseType: "id_token",
     scopes: ["profile", "email"],
     redirectUri,
@@ -58,7 +59,19 @@ export default function Login() {
           }
 
           const credential = GoogleAuthProvider.credential(id_token);
-          await signInWithCredential(auth, credential);
+          const userCredential = await signInWithCredential(auth, credential);
+          const user = userCredential.user;
+          const userRef = doc(db, "users", user.uid);
+          const userSnap = await getDoc(userRef);
+          if (!userSnap.exists()) {
+            await setDoc(userRef, {
+              u_id: user.uid, 
+              firstname: user.displayName?.split(" ")[0] || "",
+              lastname: user.displayName?.split(" ").slice(1).join(" ") || "", 
+              email: user.email,
+            });
+          }
+
           router.push("/");
         } catch (err) {
           console.error(err);
