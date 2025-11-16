@@ -1,4 +1,4 @@
-import React from "react";
+import React, { use, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { auth } from "../../firebase";
-import { Timestamp } from "firebase/firestore";
+import { auth, db } from "../../firebase";
+import { arrayRemove, doc, updateDoc } from "firebase/firestore";
 
 export default function QnACard({
   item,
@@ -25,6 +25,9 @@ export default function QnACard({
   deleteQuestion,
   handleUpvote,
 }) {
+  const [editingAnswerId, setEditingAnswerId] = useState(null);
+  const [editingAnswerText, setEditingAnswerText] = useState("");
+
   const upvotes = item.upvotes || [];
 
   const timeAgo = (Timestamp) => {
@@ -43,18 +46,90 @@ export default function QnACard({
     }
     return `${Math.floor(diff / 86400)} dite me pare`;
   };
+
+  const startEditingAnswer = (index, ans) => {
+    setEditingAnswerId(index);
+    setEditingAnswerText(ans.text);
+  };
+
+  const saveEditedAnswer = async (index) => {
+    if (editingAnswerText.trim() === "") return;
+    const updatedAnswers = [...item.answers];
+    updatedAnswers[index].text = editingAnswerText;
+    await updateDoc(doc(db, "questions", item.id), { answers: updatedAnswers });
+    setEditingAnswerId(null);
+    setEditingAnswerText("");
+  };
+
+  const deleteAnswer = async (ans) => {
+    await updateDoc(doc(db, "questions", item.id), {
+      answers: arrayRemove(ans),
+    });
+  };
+
   return (
     <View style={styles.qnaCard}>
       <Text style={styles.qnaQuestionText}>❓ {item.question}</Text>
       <Text style={styles.qnaDate}>{timeAgo(item.createdAt)}</Text>
+
       <View style={styles.answersContainer}>
         <Text style={styles.answersTitle}>Përgjigjet:</Text>
         {item.answers.map((ans, index) => (
-          <Text key={index} style={styles.qnaAnswerText}>
-            💬 {ans}
-          </Text>
+          <View key={index} style={{ marginVertical: 4 }}>
+            {editingAnswerId === index ? (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <TextInput
+                  style={[styles.inputSimple, { flex: 1 }]}
+                  value={editingAnswerText}
+                  onChangeText={setEditingAnswerText}
+                />
+                <TouchableOpacity
+                  style={styles.buttonPrimary}
+                  onPress={() => saveEditedAnswer(index)}
+                >
+                  <Text style={styles.buttonText}>Ruaj</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <Text style={styles.qnaAnswerText}>💬 {ans.text}</Text>
+                {ans.userId === auth.currentUser?.uid && (
+                  <>
+                    <TouchableOpacity
+                      onPress={() => startEditingAnswer(index, ans)}
+                    >
+                      <Text style={[styles.editBtn, { marginLeft: 10 }]}>
+                        ✏️
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() =>
+                        Alert.alert(
+                          "Konfirmo Fshirjen",
+                          "A je i sigurt qe deshiron ta fshish kete pergjigjje?",
+                          [
+                            { text: "Jo", style: "cancel" },
+                            {
+                              text: "Po",
+                              style: "destructive",
+                              onPress: () => deleteAnswer(ans),
+                            },
+                          ]
+                        )
+                      }
+                    >
+                      <Text style={[styles.deleteBtn, { marginLeft: 5 }]}>
+                        🗑️
+                      </Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            )}
+          </View>
         ))}
       </View>
+
       <View style={styles.actionsRow}>
         <TouchableOpacity onPress={() => handleUpvote(item.id, upvotes)}>
           <Text
