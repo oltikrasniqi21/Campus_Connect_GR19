@@ -4,7 +4,6 @@ import { useRouter } from 'expo-router';
 import { collection, onSnapshot, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../firebase';
 import { Flashcard } from '../components/Homepage/flashcards.jsx';
-
 export default function SavedPosts() {
   const router = useRouter();
   const [savedEvents, setSavedEvents] = useState([]);
@@ -15,18 +14,12 @@ export default function SavedPosts() {
   const [folderName, setFolderName] = useState("");
 
   useEffect(() => {
-    const user = auth.currentUser;
-    if (user) {
-      const q = collection(db, "saved_events");
-      const unsub = onSnapshot(q, snapshot => {
-        const data = snapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter(event => event.savedBy === user.uid);
-        setSavedEvents(data);
-      });
-
-      return unsub;
-    }
+    const savedRef = collection(db, "saved_events");
+    const unsub = onSnapshot(savedRef, snapshot => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setSavedEvents(data);
+    });
+    return unsub;
   }, []);
 
   useEffect(() => {
@@ -35,14 +28,10 @@ export default function SavedPosts() {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setFolders(data);
     });
-
     return unsub;
   }, []);
 
-  const openFolder = (folder) => {
-    router.push(`/SavedFolder/${folder.id}`);
-  };
-
+  const openFolder = (folder) => router.push(`/SavedFolder/${folder.id}`);
   const openEditModal = (folder) => {
     setSelectedFolder(folder);
     setFolderName(folder.name);
@@ -64,32 +53,15 @@ export default function SavedPosts() {
 
   const deleteFolder = async (folderId) => {
     try {
-      console.log("Starting folder deletion:", folderId);
-
-      if (!folderId) {
-        throw new Error("No folder ID provided");
-      }
-
+      if (!folderId) throw new Error("No folder ID provided");
       const folderRef = doc(db, "folders", folderId);
-      console.log("Folder reference:", folderRef.path);
-
       await deleteDoc(folderRef);
-      console.log("Folder deleted successfully");
-
-      // Close modal after successful deletion
       setEditModalVisible(false);
       setSelectedFolder(null);
       setFolderName("");
-
     } catch (error) {
-      console.error("Full error deleting folder:", error);
-      console.error("Error code:", error.code);
-      console.error("Error message:", error.message);
-
-      Alert.alert(
-        "Delete Failed",
-        `Error: ${error.code || 'Unknown error'}\nMessage: ${error.message}`
-      );
+      console.error(error);
+      Alert.alert("Delete Failed", error.message);
     }
   };
 
@@ -100,7 +72,6 @@ export default function SavedPosts() {
           <Text style={styles.folderTitle}>{item.name}</Text>
           <Text style={styles.folderSubtitle}>Folder</Text>
         </View>
-
         <TouchableOpacity style={styles.editButton} onPress={() => openEditModal(item)}>
           <Text style={styles.editButtonText}>Edit</Text>
         </TouchableOpacity>
@@ -131,68 +102,34 @@ export default function SavedPosts() {
             date={item.date}
             time={item.time}
             location={item.location}
+            saved={true} 
           />
         )}
       />
 
-      {/* Edit Folder Modal */}
       <Modal
         animationType="slide"
         transparent={true}
         visible={editModalVisible}
         onRequestClose={() => setEditModalVisible(false)}
       >
-        <View style={{
-          flex: 1, justifyContent: 'center', alignItems: 'center',
-          backgroundColor: 'rgba(0,0,0,0.5)'
-        }}>
-          <View style={{
-            width: '80%', backgroundColor: '#fff', borderRadius: 10,
-            padding: 20
-          }}>
-            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 15 }}>Edit Folder</Text>
-
+        <View style={{ flex:1, justifyContent:'center', alignItems:'center', backgroundColor:'rgba(0,0,0,0.5)'}}>
+          <View style={{ width:'80%', backgroundColor:'#fff', borderRadius:10, padding:20 }}>
+            <Text style={{ fontWeight:'bold', fontSize:18, marginBottom:15 }}>Edit Folder</Text>
             <TextInput
               value={folderName}
               onChangeText={setFolderName}
               placeholder="Folder name"
-              style={{
-                borderWidth: 1,
-                borderColor: '#ccc',
-                borderRadius: 8,
-                padding: 10,
-                marginBottom: 15
-              }}
+              style={{ borderWidth:1, borderColor:'#ccc', borderRadius:8, padding:10, marginBottom:15 }}
             />
-
-            <Pressable
-              onPress={renameFolder}
-              style={{
-                padding: 12, backgroundColor: '#820d0d',
-                borderRadius: 8, marginBottom: 10
-              }}
-            >
-              <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>Rename</Text>
+            <Pressable onPress={renameFolder} style={{ padding:12, backgroundColor:'#820d0d', borderRadius:8, marginBottom:10 }}>
+              <Text style={{ color:'#fff', textAlign:'center', fontWeight:'600' }}>Rename</Text>
             </Pressable>
-
-            <TouchableOpacity
-              onPress={() => {
-                console.log("Delete button pressed");
-                deleteFolder(selectedFolder.id);
-              }}
-              style={{
-                padding: 12, backgroundColor: '#FF3B30',
-                borderRadius: 8, marginBottom: 10
-              }}
-            >
-              <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '600' }}>Delete Folder</Text>
-            </TouchableOpacity>
-
-            <Pressable
-              onPress={() => setEditModalVisible(false)}
-              style={{ marginTop: 10 }}
-            >
-              <Text style={{ textAlign: 'center', color: 'red' }}>Cancel</Text>
+            <Pressable onPress={() => deleteFolder(selectedFolder.id)} style={{ padding:12, backgroundColor:'#FF3B30', borderRadius:8, marginBottom:10 }}>
+              <Text style={{ color:'#fff', textAlign:'center', fontWeight:'600' }}>Delete Folder</Text>
+            </Pressable>
+            <Pressable onPress={() => setEditModalVisible(false)} style={{ marginTop:10 }}>
+              <Text style={{ textAlign:'center', color:'red' }}>Cancel</Text>
             </Pressable>
           </View>
         </View>
@@ -200,6 +137,7 @@ export default function SavedPosts() {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#F9F9F9' },
