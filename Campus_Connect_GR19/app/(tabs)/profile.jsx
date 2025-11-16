@@ -52,7 +52,7 @@ export default function Profile() {
     if (!user) return;
 
     const postsRef = collection(db, "events");
-    const q = query(postsRef, where("userId", "==", user.uid));
+    const q = query(postsRef, where("publisher", "==", user.uid));
     const unsubscribePosts = onSnapshot(q, (snapshot) => {
       const userPosts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
       setPosts(userPosts);
