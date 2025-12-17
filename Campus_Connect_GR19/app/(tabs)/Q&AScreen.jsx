@@ -12,6 +12,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import QnACard from "../../components/Homepage/Q&ACard";
 import { auth, db } from "../../firebase";
 import {
+  registerLocalNotifications,
+  notifyAnswerToQuestion,
+} from "../notifications";
+import {
   addDoc,
   collection,
   onSnapshot,
@@ -102,11 +106,17 @@ export default function QandAScreen() {
     setNewQuestion("");
   };
 
+  useEffect(() => {
+    registerLocalNotifications();
+  }, []);
+
   const handleAddAnswer = async (id) => {
     if (newAnswer.trim() === "") return;
 
     try {
+      const question = questions.find((q) => q.id === id);
       const questionRef = doc(db, "questions", id);
+
       await updateDoc(questionRef, {
         answers: arrayUnion({
           text: newAnswer,
@@ -114,6 +124,10 @@ export default function QandAScreen() {
           createdAt: Date.now(),
         }),
       });
+
+      if (question.userId !== auth.currentUser.uid) {
+        await notifyAnswerToQuestion(question.question);
+      }
 
       setNewAnswer("");
       setSelectedQuestionId(null);
