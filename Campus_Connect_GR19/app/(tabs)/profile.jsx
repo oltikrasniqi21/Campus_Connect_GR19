@@ -184,13 +184,14 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.profileSection}>
-        <Image
-          source={{
-            uri: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`,
-          }}
-          style={styles.avatar}
-        />
+  <View style={styles.profileSection}>
+    {user.photoURL ? (
+      <Image
+        source={{ uri: user.photoURL }}
+        style={styles.avatar}
+      />
+    ) : null}
+
 
         <View style={styles.nameRow}>
           <Text style={styles.fullName}>

@@ -16,9 +16,11 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { auth, db } from "../firebase";
+import { db } from "../firebase";
+import { useAuth } from "../context/AuthContext";
 
 export default function PostLFItem() {
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [postType, setPostType] = useState("");
   const [title, setTitle] = useState("");
@@ -80,6 +82,11 @@ export default function PostLFItem() {
   };
 
   const handleSubmit = async () => {
+    if (loading || !user) {
+      setError("User not authenticated.");
+      return;
+    }
+
     if (!postType.trim()) {
       setError("Please select Lost or Found");
       return;
@@ -104,12 +111,17 @@ export default function PostLFItem() {
       setError("Please provide additional information about the item.");
       return;
     }
+    if (!photo) {
+      setError("Please upload a photo of the item.");
+      return;
+    }
+
     setError("");
 
     try {
-      const userDocRef = doc(db, "users", auth.currentUser.uid);
+      const userDocRef = doc(db, "users", user.id);
       const userSnap = await getDoc(userDocRef);
-      let postedByName = auth.currentUser.email;
+      let postedByName = user.email;
       if (userSnap.exists()) {
         const userData = userSnap.data();
         postedByName = `${userData.firstname} ${userData.lastname}`;
@@ -121,13 +133,11 @@ export default function PostLFItem() {
         location,
         additionalInfo,
         status: postType,
-        userId: auth.currentUser.uid,
+        userId: user.id,
         postedBy: postedByName,
-        pfp:
-          auth.currentUser.photoURL ||
-          `https://i.pravatar.cc/150?u=${auth.currentUser.uid}`,
+        pfp: user.photoURL ?? null,
         postedTime: Timestamp.now(),
-        photo: photo || "https://picsum.photos/200/200?random=3",
+        photo: photo,
       });
 
       setModalVisible(true);
