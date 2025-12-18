@@ -1,78 +1,58 @@
 import { ScrollView, StyleSheet } from "react-native";
-
 import { Flashcard } from "@/components/Homepage/flashcards.jsx";
-import { router } from "expo-router";
-import { collection, onSnapshot, orderBy, query, doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  orderBy,
+  query,
+  doc,
+  getDoc,
+} from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Text, View } from "react-native";
-import { auth } from "../../firebase";
 import { screenWidth } from "./_layout";
 import { db } from "../../firebase";
+import { useAuth } from "../../context/AuthContext";
 
 export default function TabOneScreen() {
-  const [userEmail, setUserEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [userName, setUserName] = useState("");
+  const { user, loading } = useAuth();
   const [events, setEvents] = useState([]);
 
   useEffect(() => {
-    setLoading(true);
+    if (loading || !user) return;
 
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        setUserEmail(user.email);
-        const userDocRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userDocRef);
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          setUserName(`${data.firstname} ${data.lastname}`); 
-        } else {
-          setUserName("User");
-        }
-      } else {
-        router.replace("/login");
-      }
-      setLoading(false);
-    });
+    const q = query(collection(db, "events"), orderBy("createdAt", "desc"));
 
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const ref = collection(db, "events");
-
-    const unsub = onSnapshot(ref, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
+    const unsub = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
       }));
       setEvents(data);
     });
 
     return unsub;
-  }, []);
-
-  const loadEvents = (user, setEvents) => {
-    const eventsRef = collection(db, "events");
-    const q = query(eventsRef, orderBy("createdAt", "desc"));
-
-    return onSnapshot(q, (snapshot) => {
-      const events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setevents(events);
-    });
-  };
-
+  }, [loading, user?.id]);
+  
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.welcome}>Loading...</Text>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <Text>Welcome, User</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.welcome}>Welcome, {userName || "User"}</Text>
+      <Text style={styles.welcome}>Welcome, {user.firstname || "User"}</Text>
 
       <ScrollView style={styles.eventsContainer}>
         <Text style={styles.sectionTitle}>Eventet Aktuale!</Text>
@@ -82,7 +62,9 @@ export default function TabOneScreen() {
             : "No date";
 
           const time = event.time?.toDate?.()
-            ? event.time.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            ? event.time
+                .toDate()
+                .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
             : event.time || "No time";
 
           return (
@@ -94,7 +76,7 @@ export default function TabOneScreen() {
               time={time}
               location={event.location}
             />
-          )
+          );
         })}
       </ScrollView>
     </View>
