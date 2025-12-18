@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,15 +11,18 @@ import {
   StatusBar,
   Image,
   Alert,
+  Modal,
+  ActionSheetIOS,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { collection, query, orderBy, onSnapshot, addDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import ConfirmModal from "../components/ConfirmModal.jsx";
-import { db } from "../firebase";
+import { db, auth } from "../firebase.js"; 
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { auth } from "../firebase.js";
-import { useEffect } from "react";
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 
 export default function AddEvent() {
   const router = useRouter();
@@ -38,23 +41,117 @@ export default function AddEvent() {
   const [modalType, setModalType] = useState("");
   const [modalMessage, setModalMessage] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showImagePickerModal, setShowImagePickerModal] = useState(false);
+  const [eventPublisher, setEventPublisher] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setEventPublisher(u);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const generateRandomEventImage = () => {
-    const width = 400;
-    const height = 300;
+    const width = 800;
+    const height = 600;
     const seed = Math.random().toString(36).substring(2);
-
     return `https://picsum.photos/${width}/${height}?random=${seed}`;
   };
 
+ 
+
+  const handleAddPhotoPress = () => {
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ["Cancel", "Take Photo", "Choose from Library"],
+          cancelButtonIndex: 0,
+        },
+        async (buttonIndex) => {
+          if (buttonIndex === 1) await pickFromCamera();
+          if (buttonIndex === 2) await pickFromLibrary();
+        }
+      );
+    } else {
+      setShowImagePickerModal(true);
+    }
+  };
+
+  const pickFromCamera = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission required", "Camera access is required.");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3], 
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      await processImage(result.assets[0].uri);
+    }
+  };
+
+  const pickFromLibrary = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission required", "Media library access is required.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3], 
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      await processImage(result.assets[0].uri);
+    }
+  };
+
+  const processImage = async (uri) => {
+    try {
+      setUploadingImage(true);
+
+   
+      const manipulated = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 800 } }], 
+        {
+          compress: 0.6,
+          format: ImageManipulator.SaveFormat.JPEG,
+          base64: true,
+        }
+      );
+
+      const base64String = `data:image/jpeg;base64,${manipulated.base64}`;
+      setEventPhoto(base64String);
+    } catch (error) {
+      console.error("Image processing error:", error);
+      Alert.alert("Error", "Failed to process image.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setEventPhoto(null);
+  };
+
+
+
   const handleDateChange = (dateString) => {
     const newDate = new Date(dateString);
-    
     if (isNaN(newDate.getTime())) {
       setError("Please enter a valid date!");
       return;
     }
-    
     setEventDate(newDate);
     setError("");
   };
@@ -62,14 +159,10 @@ export default function AddEvent() {
   const handleTimeChange = (timeString) => {
     const [hours, minutes] = timeString.split(":");
     const newTime = new Date(eventTime);
-    
-    if (hours === undefined || minutes === undefined || 
-        isNaN(hours) || isNaN(minutes) || 
-        hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-      setError("Please enter a valid time!");
-      return;
+    if (hours === undefined || minutes === undefined) {
+        setError("Please enter a valid time!");
+        return;
     }
-    
     newTime.setHours(parseInt(hours));
     newTime.setMinutes(parseInt(minutes));
     setEventTime(newTime);
@@ -86,63 +179,8 @@ export default function AddEvent() {
         eventTime.getMinutes()
       );
     } catch (error) {
-      console.error("Error calculating event date:", error);
       return new Date();
     }
-  };
-
-  const eventDateTime = getEventDateTime();
-
-  const [eventPublisher, setEventPublisher] = useState(null);
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((u) => {
-      setEventPublisher(u);
-      console.log("Publisher set to:", u.email, " ", u.uid);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const handleAddPhoto = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      if (file.size > 1024 * 1024) {
-        Alert.alert("Error", "Ju lutem zgjidhni nje imazh me te vogel se 1MB");
-        return;
-      }
-      
-      setUploadingImage(true);
-      
-      try {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const base64Image = event.target.result;
-          setEventPhoto(base64Image);
-          setUploadingImage(false);
-        };
-        reader.onerror = () => {
-          Alert.alert("Error", "Procesimi i imazhit deshtoi");
-          setUploadingImage(false);
-        };
-        reader.readAsDataURL(file);
-      } catch (error) {
-        console.error("Error:", error);
-        Alert.alert("Error", "Procesimi i imazhit deshtoi");
-        setUploadingImage(false);
-      }
-    };
-    
-    input.click();
-  };
-
-  const handleRemovePhoto = () => {
-    setEventPhoto(null);
   };
 
   const addEvent = async () => {
@@ -151,23 +189,14 @@ export default function AddEvent() {
       return;
     }
 
-    if (isNaN(eventDate.getTime())) {
-      setError("Ju lutemi jepni nje date te vlefshme!");
-      return;
-    }
+    const fullDateTime = getEventDateTime();
 
-    if (isNaN(eventTime.getTime())) {
-      setError("Ju lutemi jepni nje kohe te vlefshme");
-      return;
-    }
-
-    if (eventDateTime < new Date()) {
+    if (fullDateTime < new Date()) {
       setError("Data ose koha eshte vendosur gabim! Eventi duhet te jete ne te ardhmen.");
       return;
     }
 
-  
-    const eventImage = eventPhoto || generateRandomEventImage();
+    const finalEventImage = eventPhoto || generateRandomEventImage();
 
     const newEvent = {
       title: eventTitle,
@@ -176,8 +205,8 @@ export default function AddEvent() {
       location: eventLocation,
       description: eventDescription,
       publisher: eventPublisher.uid,
-      eventPhoto: eventImage,
-      createdAt: new Date()
+      eventPhoto: finalEventImage,
+      createdAt: new Date(),
     };
 
     try {
@@ -207,21 +236,50 @@ export default function AddEvent() {
     }
   };
 
-  const getSafeDateValue = () => {
-    try {
-      return eventDate.toISOString().slice(0, 10);
-    } catch (error) {
-      return new Date().toISOString().slice(0, 10);
-    }
-  };
+  const getSafeDateValue = () => eventDate.toISOString().slice(0, 10);
+  const getSafeTimeValue = () => eventTime.toTimeString().slice(0, 5);
 
-  const getSafeTimeValue = () => {
-    try {
-      return eventTime.toTimeString().slice(0, 5);
-    } catch (error) {
-      return new Date().toTimeString().slice(0, 5);
-    }
-  };
+  const ImagePickerModal = () => (
+    <Modal
+      visible={showImagePickerModal}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setShowImagePickerModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <TouchableOpacity 
+            style={styles.modalOption}
+            onPress={() => {
+              setShowImagePickerModal(false);
+              pickFromCamera();
+            }}
+          >
+            <Ionicons name="camera-outline" size={24} color="#333" />
+            <Text style={styles.modalOptionText}>Take Photo</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.modalOption}
+            onPress={() => {
+              setShowImagePickerModal(false);
+              pickFromLibrary();
+            }}
+          >
+            <Ionicons name="images-outline" size={24} color="#333" />
+            <Text style={styles.modalOptionText}>Choose from Library</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.cancelButton}
+            onPress={() => setShowImagePickerModal(false)}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -250,7 +308,7 @@ export default function AddEvent() {
           ) : (
             <TouchableOpacity 
               style={[styles.photoUploadButton, uploadingImage && styles.uploadingButton]} 
-              onPress={handleAddPhoto}
+              onPress={handleAddPhotoPress} // Changed to use our new picker logic
               disabled={uploadingImage}
             >
               <Ionicons name="camera" size={24} color={uploadingImage ? "#999" : "#820D0D"} />
@@ -264,18 +322,12 @@ export default function AddEvent() {
         <View style={styles.dateTimeRow}>
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Data</Text>
-
             {Platform.OS === "web" ? (
               <input
                 type="date"
                 value={getSafeDateValue()}
                 onChange={(e) => handleDateChange(e.target.value)}
-                style={{ 
-                  padding: 10, 
-                  borderRadius: 8, 
-                  border: "1px solid #ccc",
-                  backgroundColor: "#fafafa"
-                }}
+                style={webInputStyle}
                 min={new Date().toISOString().split('T')[0]}
               />
             ) : (
@@ -285,7 +337,6 @@ export default function AddEvent() {
                 </Text>
               </TouchableOpacity>
             )}
-
             {showDatePicker && (
               <DateTimePicker
                 value={isNaN(eventDate.getTime()) ? new Date() : eventDate}
@@ -301,18 +352,12 @@ export default function AddEvent() {
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Koha</Text>
-
             {Platform.OS === "web" ? (
               <input
                 type="time"
                 value={getSafeTimeValue()}
                 onChange={(e) => handleTimeChange(e.target.value)}
-                style={{ 
-                  padding: 10, 
-                  borderRadius: 8, 
-                  border: "1px solid #ccc",
-                  backgroundColor: "#fafafa"
-                }}
+                style={webInputStyle}
               />
             ) : (
               <TouchableOpacity style={styles.input} onPress={() => setShowTimePicker(true)}>
@@ -321,7 +366,6 @@ export default function AddEvent() {
                 </Text>
               </TouchableOpacity>
             )}
-
             {showTimePicker && (
               <DateTimePicker
                 value={isNaN(eventTime.getTime()) ? new Date() : eventTime}
@@ -356,20 +400,39 @@ export default function AddEvent() {
         />
 
         <TouchableOpacity style={styles.submitButton} onPress={addEvent}>
-          <Ionicons name="calendar-sharp" size={20} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.submitText}>Shto Eventin</Text>
+          {uploadingImage ? (
+             <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <Ionicons name="calendar-sharp" size={20} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.submitText}>Shto Eventin</Text>
+            </>
+          )}
         </TouchableOpacity>
-        {error ? <Text style={{ color: 'red', fontSize: 18, textAlign: "center", marginTop: 10 }}>{error}</Text> : null}
+        
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        
         <ConfirmModal
           visible={modalVisible}
           type={modalType}
           message={modalMessage}
           onClose={handleModalClose}
         />
+
+        <ImagePickerModal />
       </ScrollView>
     </SafeAreaView>
   );
 }
+
+const webInputStyle = {
+  padding: 10,
+  borderRadius: 8,
+  border: "1px solid #ccc",
+  backgroundColor: "#fafafa",
+  width: "100%",
+  boxSizing: "border-box"
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -379,34 +442,33 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   dateTimeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 10,
-    marginHorizontal: -5,
   },
   inputGroup: {
     flex: 1,
-    paddingHorizontal: 5,
   },
   label: {
     color: "#820D0D",
     fontWeight: "600",
-    marginTop: 12,
-    marginBottom: 4,
+    marginTop: 15,
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,
     borderColor: "#848484ff",
     borderRadius: 8,
-    padding: 10,
+    padding: 12,
     backgroundColor: "#fafafa",
+    fontSize: 16,
   },
-  
   photoSection: {
     marginBottom: 10,
+    marginTop: 5,
   },
   photoUploadButton: {
     flexDirection: 'row',
@@ -427,6 +489,7 @@ const styles = StyleSheet.create({
     color: "#820D0D",
     fontWeight: "600",
     marginLeft: 8,
+    fontSize: 15,
   },
   uploadingText: {
     color: "#999",
@@ -436,28 +499,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   photoPreview: {
-    width: 200,
-    height: 150,
+    width: '100%',
+    aspectRatio: 4 / 3, 
     borderRadius: 8,
-    borderWidth: 2,
-    borderColor: "#820D0D",
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
   },
   removePhotoButton: {
     position: 'absolute',
     top: -10,
     right: -10,
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 15,
+    zIndex: 10,
   },
   submitButton: {
     backgroundColor: "#820D0D",
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 10,
-    marginTop: 30,
-    elevation: 5,
+    marginTop: 35,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -468,5 +532,46 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     fontSize: 18,
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 15
+  },
+  
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 30,
+  },
+  modalOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  modalOptionText: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: "#333",
+  },
+  cancelButton: {
+    paddingVertical: 18,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: "#820D0D",
+    fontWeight: "600",
   },
 });

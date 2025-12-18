@@ -8,11 +8,17 @@ import {
   Image,
   ScrollView,
   Alert,
+  Platform,
+  Modal,
+  ActionSheetIOS,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import { auth, db } from "../firebase.js"; 
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 
 export default function EditProfile() {
   const router = useRouter();
@@ -23,6 +29,7 @@ export default function EditProfile() {
   const [bio, setBio] = useState("");
   const [profilePicture, setProfilePicture] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [showImagePickerModal, setShowImagePickerModal] = useState(false);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -35,7 +42,7 @@ export default function EditProfile() {
           setFirstName(data.firstname || "");
           setLastName(data.lastname || "");
           setBio(data.bio || "");
-          setProfilePicture(data.photoURL || profilePicture);
+          setProfilePicture(data.photoURL || null);
         }
       } catch (err) {
         console.error("Error loading user:", err);
@@ -45,45 +52,90 @@ export default function EditProfile() {
     loadUser();
   }, [currentUser]);
 
-  const handleChangePicture = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      
-      if (file.size > 1024 * 1024) {
-        Alert.alert("Error", "Please select an image smaller than 1MB");
-        return;
-      }
-      
-      setUploading(true);
-      
-      try {
-      
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const base64Image = event.target.result;
-          setProfilePicture(base64Image);
-          setUploading(false);
-        };
-        reader.onerror = () => {
-          Alert.alert("Error", "Failed to process image");
-          setUploading(false);
-        };
-        reader.readAsDataURL(file);
-      } catch (error) {
-        console.error("Error:", error);
-        Alert.alert("Error", "Failed to process image");
-        setUploading(false);
-      }
-    };
-    
-    input.click();
+  /* =========================
+     IMAGE PICKING & COMPRESSION
+     ========================= */
+
+  const handleChangePicture = async () => {
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ["Cancel", "Take Photo", "Choose from Library"],
+          cancelButtonIndex: 0,
+        },
+        async (buttonIndex) => {
+          if (buttonIndex === 1) await pickFromCamera();
+          if (buttonIndex === 2) await pickFromLibrary();
+        }
+      );
+    } else {
+      setShowImagePickerModal(true);
+    }
   };
+
+  const pickFromCamera = async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission required", "Camera access is required.");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      await processImage(result.assets[0].uri);
+    }
+  };
+
+  const pickFromLibrary = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission required", "Media library access is required.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      await processImage(result.assets[0].uri);
+    }
+  };
+
+ 
+  const processImage = async (uri) => {
+    try {
+      setUploading(true);
+
+      const manipulated = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 300, height: 300 } }],
+        {
+          compress: 0.5,
+          format: ImageManipulator.SaveFormat.JPEG,
+          base64: true, 
+        }
+      );
+
+      const base64String = `data:image/jpeg;base64,${manipulated.base64}`;
+      setProfilePicture(base64String);
+    } catch (error) {
+      console.error("Image processing error:", error);
+      Alert.alert("Error", "Failed to process image.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
 
   const handleSave = async () => {
     if (!currentUser) {
@@ -91,37 +143,98 @@ export default function EditProfile() {
       return;
     }
 
+    setUploading(true);
     try {
       await updateDoc(doc(db, "users", currentUser.uid), {
         firstname: firstName,
         lastname: lastName,
-        bio,
+        bio: bio,
         photoURL: profilePicture,
       });
 
       Alert.alert("Success", "Profile updated successfully!");
-      router.replace("/profile");
+      router.back(); 
     } catch (err) {
       console.error("Error saving profile:", err);
-      Alert.alert("Error", "Failed to save profile.");
+      if (err.toString().includes("exceeds the maximum allowed size")) {
+         Alert.alert("Error", "Image is still too large. Please try a simpler photo.");
+      } else {
+         Alert.alert("Error", "Failed to save profile.");
+      }
+    } finally {
+      setUploading(false);
     }
   };
+
+  const ImagePickerModal = () => (
+    <Modal
+      visible={showImagePickerModal}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setShowImagePickerModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <TouchableOpacity 
+            style={styles.modalOption}
+            onPress={() => {
+              setShowImagePickerModal(false);
+              pickFromCamera();
+            }}
+          >
+            <Ionicons name="camera-outline" size={24} color="#333" />
+            <Text style={styles.modalOptionText}>Take Photo</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.modalOption}
+            onPress={() => {
+              setShowImagePickerModal(false);
+              pickFromLibrary();
+            }}
+          >
+            <Ionicons name="images-outline" size={24} color="#333" />
+            <Text style={styles.modalOptionText}>Choose from Library</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.cancelButton}
+            onPress={() => setShowImagePickerModal(false)}
+          >
+            <Text style={styles.cancelButtonText}>Cancel</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.avatarSection}>
-        <Image source={{ uri: profilePicture }} style={styles.avatar} />
+        <Image
+          source={
+            profilePicture
+              ? { uri: profilePicture }
+              : require("../assets/images/avatar-placeholder.png")
+          }
+          style={styles.avatar}
+          resizeMode="cover"
+        />
+
         <TouchableOpacity
           style={[styles.changePicBtn, uploading && styles.disabledBtn]}
           onPress={handleChangePicture}
           disabled={uploading}
         >
-          <Ionicons name="camera" size={24} color="#fff" />
+          {uploading ? (
+             <ActivityIndicator size="small" color="#fff" />
+          ) : (
+             <Ionicons name="camera" size={24} color="#fff" />
+          )}
           <Text style={styles.changePicText}>
-            {uploading ? "Processing..." : "Change Picture"}
+            {uploading ? " Processing..." : " Change Picture"}
           </Text>
         </TouchableOpacity>
-        <Text style={styles.noteText}>Note: Images stored locally</Text>
       </View>
 
       <View style={styles.form}>
@@ -147,21 +260,29 @@ export default function EditProfile() {
           multiline
         />
 
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Save</Text>
+        <TouchableOpacity 
+            style={[styles.saveBtn, uploading && styles.disabledBtn]} 
+            onPress={handleSave}
+            disabled={uploading}
+        >
+          <Text style={styles.saveBtnText}>
+            {uploading ? "Saving..." : "Save"}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
       </View>
+
+      <ImagePickerModal />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1, 
     paddingHorizontal: 20,
     paddingTop: 30,
     paddingBottom: 50,
@@ -182,6 +303,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 3,
     borderColor: "#E0DDD5",
+    backgroundColor: "#E0DDD5",
   },
   changePicBtn: {
     flexDirection: "row",
@@ -198,12 +320,6 @@ const styles = StyleSheet.create({
     color: "#fff",
     marginLeft: 8,
     fontSize: 14,
-  },
-  noteText: {
-    marginTop: 8,
-    fontSize: 12,
-    color: "#666",
-    fontStyle: "italic",
   },
   form: {
     width: "100%",
@@ -247,5 +363,39 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 16,
     marginTop: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 30,
+  },
+  modalOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  modalOptionText: {
+    fontSize: 16,
+    marginLeft: 15,
+    color: "#333",
+  },
+  cancelButton: {
+    paddingVertical: 18,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    color: "#820D0D",
+    fontWeight: "600",
   },
 });
