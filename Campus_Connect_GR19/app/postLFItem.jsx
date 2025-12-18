@@ -1,27 +1,26 @@
-import React, { useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import { addDoc, collection, doc, getDoc, Timestamp } from "firebase/firestore";
+import { useState } from "react";
 import {
-  View,
+  Alert,
+  Image,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Image,
-  Platform,
-  StatusBar,
-  Modal,
+  View,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { auth, db } from "../firebase";
-import {
-  addDoc,
-  collection,
-  Timestamp,
-} from "firebase/firestore";
-import { doc, getDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import { useAuth } from "../context/AuthContext";
 
 export default function PostLFItem() {
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [postType, setPostType] = useState("");
   const [title, setTitle] = useState("");
@@ -33,7 +32,61 @@ export default function PostLFItem() {
   const [error, setError] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
 
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission required",
+        "Permission to access media library is required!"
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      aspect: [1, 1],
+      base64: true,
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
+      setPhoto(base64Img);
+    }
+  };
+
+  const takePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission required",
+        "Permission to access camera is required!"
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      base64: true,
+      quality: 0.5,
+    });
+
+    if (!result.canceled) {
+      const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
+      setPhoto(base64Img);
+    }
+  };
+
   const handleSubmit = async () => {
+    if (loading || !user) {
+      setError("User not authenticated.");
+      return;
+    }
+
     if (!postType.trim()) {
       setError("Please select Lost or Found");
       return;
@@ -58,16 +111,21 @@ export default function PostLFItem() {
       setError("Please provide additional information about the item.");
       return;
     }
+    if (!photo) {
+      setError("Please upload a photo of the item.");
+      return;
+    }
+
     setError("");
 
     try {
-      const userDocRef = doc(db, "users", auth.currentUser.uid);
-    const userSnap = await getDoc(userDocRef);
-    let postedByName = auth.currentUser.email;
-    if (userSnap.exists()) {
-      const userData = userSnap.data();
-      postedByName = `${userData.firstname} ${userData.lastname}`;
-    }
+      const userDocRef = doc(db, "users", user.id);
+      const userSnap = await getDoc(userDocRef);
+      let postedByName = user.email;
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        postedByName = `${userData.firstname} ${userData.lastname}`;
+      }
 
       await addDoc(collection(db, "lost_found_items"), {
         title,
@@ -75,11 +133,11 @@ export default function PostLFItem() {
         location,
         additionalInfo,
         status: postType,
-        userId: auth.currentUser.uid,
+        userId: user.id,
         postedBy: postedByName,
-        pfp: auth.currentUser.photoURL || `https://i.pravatar.cc/150?u=${auth.currentUser.uid}`,
+        pfp: user.photoURL ?? null,
         postedTime: Timestamp.now(),
-        photo: photo || "https://picsum.photos/200/200?random=3",
+        photo: photo,
       });
 
       setModalVisible(true);
@@ -179,12 +237,22 @@ export default function PostLFItem() {
         </View>
 
         <Text style={styles.label}>Upload Photo</Text>
-        <TouchableOpacity style={styles.uploadBox}>
+        <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
           {photo ? (
-            <Image source={photo} style={styles.previewImage} />
+            <Image source={{ uri: photo }} style={styles.previewImage} />
           ) : (
             <Text style={styles.uploadText}>📷 Tap to upload photo</Text>
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.submitButton,
+            { backgroundColor: "#555", marginTop: 12 },
+          ]}
+          onPress={takePhoto}
+        >
+          <Text style={styles.submitText}>Take Photo</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>

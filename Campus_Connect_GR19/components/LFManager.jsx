@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useCallback, useState } from "react";
 import {
   Dimensions,
   FlatList,
@@ -14,9 +13,10 @@ import {
   Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
-import { auth, db } from "../firebase";
+import { db } from "../firebase";
 import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 
 const { width } = Dimensions.get("window");
 const CARD_MARGIN = 12;
@@ -24,12 +24,31 @@ const CARD_WIDTH = width - CARD_MARGIN * 2;
 
 export default function LFManager() {
   const router = useRouter();
+  const { user, loading } = useAuth();
   const [items, setItems] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
   const [showFilter, setShowFilter] = useState(false);
+
+  useEffect(() => {
+    if (loading || !user) return;
+
+    const unsub = onSnapshot(
+      collection(db, "lost_found_items"),
+      (snapshot) => {
+        const data = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+        setItems(data);
+      },
+      (error) => console.error("Snapshot error:", error)
+    );
+
+    return unsub;
+  }, [loading, user?.id]);
 
   const timeAgo = (timestamp) => {
     if (!timestamp) return "";
@@ -45,20 +64,6 @@ export default function LFManager() {
 
     return date.toLocaleDateString();
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      const unsub = onSnapshot(
-        collection(db, "lost_found_items"),
-        (snapshot) => {
-          const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
-          setItems(data);
-        }
-      );
-
-      return () => unsub();
-    }, [])
-  );
 
   const deleteItem = (id) => {
     setSelectedItem(id);
@@ -132,7 +137,7 @@ export default function LFManager() {
                 {item.status}
               </Text>
             </View>
-            {auth.currentUser?.uid === item.userId && (
+            {user?.id === item.userId && (
               <TouchableOpacity
                 onPress={() => deleteItem(item.id)}
                 style={styles.deleteIcon}

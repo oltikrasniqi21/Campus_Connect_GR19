@@ -14,10 +14,9 @@ import {
 } from "react-native";
 import { Ionicons, Feather, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { auth } from "../../firebase";
-import { signOut } from "firebase/auth";
-import { doc, getDoc, collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
+import { useAuth } from "../../context/AuthContext";
 
 const { width } = Dimensions.get("window");
 
@@ -25,67 +24,39 @@ export default function Profile() {
   const router = useRouter();
   const slideAnim = useRef(new Animated.Value(width)).current;
 
-  const [user, setUser] = useState(null);
+  const { user, loading, logout } = useAuth();
   const [menuVisible, setMenuVisible] = useState(false);
   const [posts, setPosts] = useState([]);
   const [lfPosts, setLfPosts] = useState([]);
   const [tab, setTab] = useState("events");
 
-  const currentUser = auth.currentUser;
-
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
-      if (currentUser) {
-        const userDocRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userDocRef);
-        if (userSnap.exists()) {
-          const data = userSnap.data();
-          setUser({
-            ...currentUser,
-            firstname: data.firstname,
-            lastname: data.lastname,
-            bio: data.bio || "",
-            photoURL: data.photoURL || currentUser.photoURL,
-          });
-        } else {
-          setUser(currentUser);
-        }
-      }
+    if (loading || !user) return;
+
+    const q = query(
+      collection(db, "events"),
+      where("publisher", "==", user.id)
+    );
+
+    const unsub = onSnapshot(q, (snap) => {
+      setPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
     });
 
-    return () => unsubscribe();
-  }, []);
+    return unsub;
+  }, [loading, user?.id]);
 
   useEffect(() => {
-    if (!user) return;
-    const postsRef = collection(db, "events");
-    const q = query(postsRef, where("publisher", "==", user.uid));
-    const unsubscribePosts = onSnapshot(q, (snapshot) => {
-      const userPosts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setPosts(userPosts);
-    });
-    return unsubscribePosts;
-  }, [user]);
+    if (loading || !user) return;
 
-  useEffect(() => {
-    if (!user) return;
-    const lfRef = collection(db, "lost_found_items");
-    const q = query(lfRef, where("userId", "==", user.uid));
-    const unsubscribeLf = onSnapshot(q, (snapshot) => {
-      const userLf = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setLfPosts(userLf);
-    });
-    return unsubscribeLf;
-  }, [user]);
+    const q = query(
+      collection(db, "lost_found_items"),
+      where("userId", "==", user.id)
+    );
 
-  const handleSignOut = async () => {
-    try {
-      await signOut(auth);
-      router.replace("/login");
-    } catch (error) {
-      console.error(error);
-    }
-  };
+    return onSnapshot(q, (snap) => {
+      setLfPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    });
+  }, [loading, user?.id]);
 
   const toggleMenu = () => setMenuVisible((prev) => !prev);
   useEffect(() => {
@@ -102,7 +73,7 @@ export default function Profile() {
     }).start();
   }, [menuVisible]);
 
-  if (!user) {
+  if (loading || !user) {
     return (
       <View style={[styles.container, { justifyContent: "center" }]}>
         <ActivityIndicator size="large" color="#820D0D" />
@@ -116,7 +87,9 @@ export default function Profile() {
       return (
         <View style={{ alignItems: "center", marginTop: 50 }}>
           <Text style={{ fontSize: 16, marginBottom: 15 }}>
-            {type === "events" ? "Nuk keni krijuar asnje event" : "Ju nuk keni krijuar asnje postim"}
+            {type === "events"
+              ? "Nuk keni krijuar asnje event"
+              : "Ju nuk keni krijuar asnje postim"}
           </Text>
           <TouchableOpacity
             style={{
@@ -125,10 +98,14 @@ export default function Profile() {
               paddingHorizontal: 25,
               borderRadius: 12,
             }}
-            onPress={() => router.push(type === "events" ? "/AddPost" : "/postLFItem")}
+            onPress={() =>
+              router.push(type === "events" ? "/AddPost" : "/postLFItem")
+            }
           >
             <Text style={{ color: "#fff", fontWeight: "700" }}>
-              {type === "events" ? "Krijo Event të Ri" : "Krijo nje postim te ri"}
+              {type === "events"
+                ? "Krijo Event të Ri"
+                : "Krijo nje postim te ri"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -155,14 +132,16 @@ export default function Profile() {
                   const diffHr = Math.floor(diffMin / 60);
                   const diffDay = Math.floor(diffHr / 24);
 
-                  if (diffDay > 0) postedTime = `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
-                  else if (diffHr > 0) postedTime = `${diffHr} hour${diffHr > 1 ? "s" : ""} ago`;
-                  else if (diffMin > 0) postedTime = `${diffMin} min${diffMin > 1 ? "s" : ""} ago`;
+                  if (diffDay > 0)
+                    postedTime = `${diffDay} day${diffDay > 1 ? "s" : ""} ago`;
+                  else if (diffHr > 0)
+                    postedTime = `${diffHr} hour${diffHr > 1 ? "s" : ""} ago`;
+                  else if (diffMin > 0)
+                    postedTime = `${diffMin} min${diffMin > 1 ? "s" : ""} ago`;
                   else postedTime = "Just now";
                 } else {
                   postedTime = post.postedTime || "";
                 }
-
 
                 router.push({
                   pathname: `/items/${post.id}`,
@@ -171,8 +150,10 @@ export default function Profile() {
                     description: post.description,
                     status: post.status,
                     location: post.location,
-                    postedBy: post.postedBy || `${user.firstname} ${user.lastname}`,
-                    postedBy: post.postedBy || `${user.firstname} ${user.lastname}`,
+                    postedBy:
+                      post.postedBy || `${user.firstname} ${user.lastname}`,
+                    postedBy:
+                      post.postedBy || `${user.firstname} ${user.lastname}`,
                     postedTime,
                     additionalInfo: post.additionalInfo,
                     photo: post.photo,
@@ -203,11 +184,14 @@ export default function Profile() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.profileSection}>
-        <Image
-          source={{ uri: user.photoURL || `https://i.pravatar.cc/150?u=${user.uid}` }}
-          style={styles.avatar}
-        />
+  <View style={styles.profileSection}>
+    {user.photoURL ? (
+      <Image
+        source={{ uri: user.photoURL }}
+        style={styles.avatar}
+      />
+    ) : null}
+
 
         <View style={styles.nameRow}>
           <Text style={styles.fullName}>
@@ -223,16 +207,21 @@ export default function Profile() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.email} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} textAlign="center">{currentUser.email}</Text>
+        <Text
+          style={styles.email}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}
+          textAlign="center"
+        >
+          {user.email}
+        </Text>
         <Text style={styles.subtitle}>{user.bio || "no bio yet"}</Text>
       </View>
 
       <View style={styles.tabsContainer}>
         <TouchableOpacity
-          style={[
-            styles.tab,
-            tab === "events" ? styles.activeTab : null,
-          ]}
+          style={[styles.tab, tab === "events" ? styles.activeTab : null]}
           onPress={() => setTab("events")}
         >
           <Text
@@ -246,17 +235,11 @@ export default function Profile() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.tab,
-            tab === "lf" ? styles.activeTab : null,
-          ]}
+          style={[styles.tab, tab === "lf" ? styles.activeTab : null]}
           onPress={() => setTab("lf")}
         >
           <Text
-            style={[
-              styles.tabText,
-              tab === "lf" ? styles.activeTabText : null,
-            ]}
+            style={[styles.tabText, tab === "lf" ? styles.activeTabText : null]}
           >
             LF Postimet
           </Text>
@@ -267,7 +250,9 @@ export default function Profile() {
         contentContainerStyle={styles.postsContainer}
         showsVerticalScrollIndicator={false}
       >
-        {tab === "events" ? renderGrid(posts, "events") : renderGrid(lfPosts, "lf")}
+        {tab === "events"
+          ? renderGrid(posts, "events")
+          : renderGrid(lfPosts, "lf")}
       </ScrollView>
 
       <Modal visible={menuVisible} transparent animationType="none">
@@ -295,18 +280,20 @@ export default function Profile() {
               <Text style={styles.menuText}>Saved</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem} onPress={() =>
-              { toggleMenu();
-                router.push("/editProfile")
-              }
-              }>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => {
+                toggleMenu();
+                router.push("/editProfile");
+              }}
+            >
               <Feather name="edit" size={22} color="#fff" />
               <Text style={styles.menuText}>Edit Profile Details</Text>
             </TouchableOpacity>
 
             <View style={styles.spacer} />
 
-            <TouchableOpacity style={styles.logoutButton} onPress={handleSignOut}>
+            <TouchableOpacity style={styles.logoutButton} onPress={logout}>
               <Ionicons name="log-out-outline" size={22} color="#fff" />
               <Text style={styles.menuText}>Log Out</Text>
             </TouchableOpacity>
@@ -477,8 +464,8 @@ const styles = StyleSheet.create({
   },
 
   email: {
-  fontSize: 16,
-  color: "#898580",
-  marginTop: 4,
+    fontSize: 16,
+    color: "#898580",
+    marginTop: 4,
   },
 });

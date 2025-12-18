@@ -21,9 +21,7 @@ export default function EditProfile() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [bio, setBio] = useState("");
-  const [profilePicture, setProfilePicture] = useState(
-    "https://i.pravatar.cc/150?img=12"
-  );
+  const [profilePicture, setProfilePicture] = useState(null);
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
