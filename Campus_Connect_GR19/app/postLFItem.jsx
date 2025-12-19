@@ -23,6 +23,7 @@ import Animated, {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { useCallback } from "react";
 
 export default function PostLFItem() {
   const { user, loading } = useAuth();
@@ -59,56 +60,76 @@ export default function PostLFItem() {
     transform: [{ scale: imageScale.value }],
   }));
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+const pickImage = useCallback(async () => {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission required",
-        "Permission to access media library is required!"
-      );
-      return;
-    }
+  if (status !== "granted") {
+    setError("Permission to access media library is required!");
+    return;
+  }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      base64: true,
-      quality: 0.5,
-    });
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ["images"],
+    allowsEditing: true,
+    aspect: [1, 1],
+    base64: true,
+    quality: 0.5,
+  });
 
-    if (!result.canceled) {
-      const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
-      setPhoto(base64Img);
-    }
-  };
+  if (result.canceled) return;
 
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  try {
+    const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
+    setPhoto(base64Img);
+    setError("");
+  } catch (err) {
+    console.error(err);
+    setError("Failed to process image.");
+  }
+}, []);
 
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission required",
-        "Permission to access camera is required!"
-      );
-      return;
-    }
+  const takePhoto = useCallback(async () => {
+  const { status } = await ImagePicker.requestCameraPermissionsAsync();
 
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      base64: true,
-      quality: 0.5,
-    });
+  if (status !== "granted") {
+    setError("Permission to access camera is required!");
+    return;
+  }
 
-    if (!result.canceled) {
-      const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
-      setPhoto(base64Img);
-    }
-  };
+  const result = await ImagePicker.launchCameraAsync({
+    allowsEditing: true,
+    aspect: [1, 1],
+    base64: true,
+    quality: 0.5,
+  });
 
-  const handleSubmit = async () => {
+  if (result.canceled) return;
+
+  try {
+    const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
+    setPhoto(base64Img);
+    setError("");
+  } catch (err) {
+    console.error(err);
+    setError("Failed to process photo.");
+  }
+}, []);
+
+
+const openImagePicker = useCallback(() => {
+  Alert.alert(
+    "Upload Photo",
+    "Choose an option",
+    [
+      { text: "Take Photo", onPress: takePhoto },
+      { text: "Choose from Library", onPress: pickImage },
+      { text: "Cancel", style: "cancel" },
+    ],
+    { cancelable: true }
+  );
+}, [pickImage, takePhoto]);
+
+  const handleSubmit = useCallback(async () => {
     if (loading || !user) {
       setError("User not authenticated.");
       return;
@@ -172,7 +193,7 @@ export default function PostLFItem() {
       console.error("Error saving item:", err);
       setError("Something went wrong");
     }
-  };
+  }, [loading, user, postType, title, description, location, additionalInfo, photo]);
 
   const closeModal = () => {
     setModalVisible(false);
@@ -240,7 +261,7 @@ export default function PostLFItem() {
         />
 
         <Text style={styles.label}>Upload Photo</Text>
-        <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
+        <TouchableOpacity style={styles.uploadBox} onPress={openImagePicker}>
           {photo ? (
             <Animated.Image
               source={{ uri: photo }}
@@ -249,13 +270,6 @@ export default function PostLFItem() {
           ) : (
             <Text style={styles.uploadText}>📷 Tap to upload photo</Text>
           )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.submitButton, { backgroundColor: "#555" }]}
-          onPress={takePhoto}
-        >
-          <Text style={styles.submitText}>Take Photo</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>

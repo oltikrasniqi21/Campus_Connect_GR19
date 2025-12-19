@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
-  Dimensions,
   FlatList,
   StatusBar,
   StyleSheet,
@@ -15,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../firebase";
 import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import Animated, {
   FadeInDown,
@@ -26,12 +25,9 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
+import { memo} from "react";
 
-const { width } = Dimensions.get("window");
-const CARD_MARGIN = 12;
-const CARD_WIDTH = width - CARD_MARGIN * 2;
-
-function AnimatedCard({ item, postUser, onDelete, onPress, timeAgo, isOwner }) {
+const AnimatedCard = memo (function AnimatedCard({ item, postUser, onDelete, onPress, timeAgo, isOwner }) {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -131,7 +127,7 @@ function AnimatedCard({ item, postUser, onDelete, onPress, timeAgo, isOwner }) {
       </TouchableOpacity>
     </Animated.View>
   );
-}
+});
 
 export default function LFManager() {
   const router = useRouter();
@@ -174,7 +170,7 @@ export default function LFManager() {
     return unsub;
   }, [loading, user?.id]);
 
-  const timeAgo = (timestamp) => {
+  const timeAgo = useCallback((timestamp) => {
     if (!timestamp) return "";
 
     const date = timestamp.toDate();
@@ -187,7 +183,7 @@ export default function LFManager() {
     if (diff < 172800) return "Yesterday";
 
     return date.toLocaleDateString();
-  };
+  }, []);
 
   const deleteItem = (id) => {
     setSelectedItem(id);
@@ -225,8 +221,28 @@ export default function LFManager() {
       </View>
     </Animated.View>
   );
+const handlePress = useCallback(
+  (item) => {
+    router.push({
+      pathname: `/items/${item.id}`,
+      params: {
+        itemId: item.id,
+        userId: item.userId,
+      },
+    });
+  },
+  [router]
+);
 
-  const renderItem = ({ item }) => {
+const handleDelete = useCallback(
+  (id) => {
+    deleteItem(id);
+  },
+  []
+);
+
+const renderItem = useCallback(
+  ({ item }) => {
     const postUser = usersMap[item.userId];
 
     return (
@@ -235,19 +251,14 @@ export default function LFManager() {
         postUser={postUser}
         isOwner={user?.id === item.userId}
         timeAgo={timeAgo}
-        onDelete={() => deleteItem(item.id)}
-        onPress={() =>
-          router.push({
-            pathname: `/items/${item.id}`,
-            params: {
-              itemId: item.id,
-              userId: item.userId,
-            },
-          })
-        }
+        onPress={() => handlePress(item)}
+        onDelete={() => handleDelete(item.id)}
       />
     );
-  };
+  },
+  [usersMap, user?.id, timeAgo, handlePress, handleDelete]
+);
+
 
   return (
     <SafeAreaView style={styles.container}>
