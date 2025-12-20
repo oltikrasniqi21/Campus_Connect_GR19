@@ -1,4 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  memo,
+} from "react";
 import {
   View,
   Text,
@@ -16,7 +22,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { auth, db } from "../firebase.js"; 
+import { auth, db } from "../firebase.js";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 
@@ -52,28 +58,31 @@ export default function EditProfile() {
     loadUser();
   }, [currentUser]);
 
-  /* =========================
-     IMAGE PICKING & COMPRESSION
-     ========================= */
+  const processImage = useCallback(async (uri) => {
+    try {
+      setUploading(true);
 
-  const handleChangePicture = async () => {
-    if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions(
+      const manipulated = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 300, height: 300 } }],
         {
-          options: ["Cancel", "Take Photo", "Choose from Library"],
-          cancelButtonIndex: 0,
-        },
-        async (buttonIndex) => {
-          if (buttonIndex === 1) await pickFromCamera();
-          if (buttonIndex === 2) await pickFromLibrary();
+          compress: 0.5,
+          format: ImageManipulator.SaveFormat.JPEG,
+          base64: true,
         }
       );
-    } else {
-      setShowImagePickerModal(true);
-    }
-  };
 
-  const pickFromCamera = async () => {
+      const base64String = `data:image/jpeg;base64,${manipulated.base64}`;
+      setProfilePicture(base64String);
+    } catch (error) {
+      console.error("Image processing error:", error);
+      Alert.alert("Error", "Failed to process image.");
+    } finally {
+      setUploading(false);
+    }
+  }, []);
+
+  const pickFromCamera = useCallback(async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
       Alert.alert("Permission required", "Camera access is required.");
@@ -90,9 +99,9 @@ export default function EditProfile() {
     if (!result.canceled) {
       await processImage(result.assets[0].uri);
     }
-  };
+  }, [processImage]);
 
-  const pickFromLibrary = async () => {
+  const pickFromLibrary = useCallback(async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert("Permission required", "Media library access is required.");
@@ -109,35 +118,26 @@ export default function EditProfile() {
     if (!result.canceled) {
       await processImage(result.assets[0].uri);
     }
-  };
+  }, [processImage]);
 
- 
-  const processImage = async (uri) => {
-    try {
-      setUploading(true);
-
-      const manipulated = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 300, height: 300 } }],
+  const handleChangePicture = useCallback(async () => {
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
         {
-          compress: 0.5,
-          format: ImageManipulator.SaveFormat.JPEG,
-          base64: true, 
+          options: ["Cancel", "Take Photo", "Choose from Library"],
+          cancelButtonIndex: 0,
+        },
+        async (buttonIndex) => {
+          if (buttonIndex === 1) await pickFromCamera();
+          if (buttonIndex === 2) await pickFromLibrary();
         }
       );
-
-      const base64String = `data:image/jpeg;base64,${manipulated.base64}`;
-      setProfilePicture(base64String);
-    } catch (error) {
-      console.error("Image processing error:", error);
-      Alert.alert("Error", "Failed to process image.");
-    } finally {
-      setUploading(false);
+    } else {
+      setShowImagePickerModal(true);
     }
-  };
+  }, [pickFromCamera, pickFromLibrary]);
 
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!currentUser) {
       Alert.alert("Error", "No user logged in");
       return;
@@ -153,29 +153,40 @@ export default function EditProfile() {
       });
 
       Alert.alert("Success", "Profile updated successfully!");
-      router.back(); 
+      router.back();
     } catch (err) {
       console.error("Error saving profile:", err);
       if (err.toString().includes("exceeds the maximum allowed size")) {
-         Alert.alert("Error", "Image is still too large. Please try a simpler photo.");
+        Alert.alert(
+          "Error",
+          "Image is still too large. Please try a simpler photo."
+        );
       } else {
-         Alert.alert("Error", "Failed to save profile.");
+        Alert.alert("Error", "Failed to save profile.");
       }
     } finally {
       setUploading(false);
     }
-  };
+  }, [currentUser, firstName, lastName, bio, profilePicture, router]);
 
-  const ImagePickerModal = () => (
+
+  const avatarSource = useMemo(() => {
+    return profilePicture
+      ? { uri: profilePicture }
+      : require("../assets/images/avatar-placeholder.png");
+  }, [profilePicture]);
+
+
+  const ImagePickerModal = memo(() => (
     <Modal
       visible={showImagePickerModal}
-      transparent={true}
+      transparent
       animationType="slide"
       onRequestClose={() => setShowImagePickerModal(false)}
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.modalOption}
             onPress={() => {
               setShowImagePickerModal(false);
@@ -185,8 +196,8 @@ export default function EditProfile() {
             <Ionicons name="camera-outline" size={24} color="#333" />
             <Text style={styles.modalOptionText}>Take Photo</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.modalOption}
             onPress={() => {
               setShowImagePickerModal(false);
@@ -196,8 +207,8 @@ export default function EditProfile() {
             <Ionicons name="images-outline" size={24} color="#333" />
             <Text style={styles.modalOptionText}>Choose from Library</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
+
+          <TouchableOpacity
             style={styles.cancelButton}
             onPress={() => setShowImagePickerModal(false)}
           >
@@ -206,20 +217,12 @@ export default function EditProfile() {
         </View>
       </View>
     </Modal>
-  );
+  ));
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.avatarSection}>
-        <Image
-          source={
-            profilePicture
-              ? { uri: profilePicture }
-              : require("../assets/images/avatar-placeholder.png")
-          }
-          style={styles.avatar}
-          resizeMode="cover"
-        />
+        <Image source={avatarSource} style={styles.avatar} resizeMode="cover" />
 
         <TouchableOpacity
           style={[styles.changePicBtn, uploading && styles.disabledBtn]}
@@ -227,9 +230,9 @@ export default function EditProfile() {
           disabled={uploading}
         >
           {uploading ? (
-             <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color="#fff" />
           ) : (
-             <Ionicons name="camera" size={24} color="#fff" />
+            <Ionicons name="camera" size={24} color="#fff" />
           )}
           <Text style={styles.changePicText}>
             {uploading ? " Processing..." : " Change Picture"}
@@ -239,18 +242,10 @@ export default function EditProfile() {
 
       <View style={styles.form}>
         <Text style={styles.label}>First Name</Text>
-        <TextInput
-          style={styles.input}
-          value={firstName}
-          onChangeText={setFirstName}
-        />
+        <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} />
 
         <Text style={styles.label}>Last Name</Text>
-        <TextInput
-          style={styles.input}
-          value={lastName}
-          onChangeText={setLastName}
-        />
+        <TextInput style={styles.input} value={lastName} onChangeText={setLastName} />
 
         <Text style={styles.label}>Bio</Text>
         <TextInput
@@ -260,10 +255,10 @@ export default function EditProfile() {
           multiline
         />
 
-        <TouchableOpacity 
-            style={[styles.saveBtn, uploading && styles.disabledBtn]} 
-            onPress={handleSave}
-            disabled={uploading}
+        <TouchableOpacity
+          style={[styles.saveBtn, uploading && styles.disabledBtn]}
+          onPress={handleSave}
+          disabled={uploading}
         >
           <Text style={styles.saveBtnText}>
             {uploading ? "Saving..." : "Save"}
@@ -282,7 +277,7 @@ export default function EditProfile() {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1, 
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 30,
     paddingBottom: 50,
@@ -292,10 +287,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
-  avatarSection: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
+  avatarSection: { alignItems: "center", marginBottom: 30 },
   avatar: {
     width: 110,
     height: 110,
@@ -313,17 +305,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 12,
   },
-  disabledBtn: {
-    backgroundColor: "#CCCCCC",
-  },
-  changePicText: {
-    color: "#fff",
-    marginLeft: 8,
-    fontSize: 14,
-  },
-  form: {
-    width: "100%",
-  },
+  disabledBtn: { backgroundColor: "#CCCCCC" },
+  changePicText: { color: "#fff", marginLeft: 8, fontSize: 14 },
+  form: { width: "100%" },
   label: {
     fontSize: 14,
     color: "#656565",
@@ -340,10 +324,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  bioInput: {
-    height: 100,
-    textAlignVertical: "top",
-  },
+  bioInput: { height: 100, textAlignVertical: "top" },
   saveBtn: {
     backgroundColor: "#820D0D",
     paddingVertical: 16,
@@ -383,19 +364,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  modalOptionText: {
-    fontSize: 16,
-    marginLeft: 15,
-    color: "#333",
-  },
-  cancelButton: {
-    paddingVertical: 18,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    color: "#820D0D",
-    fontWeight: "600",
-  },
+  modalOptionText: { fontSize: 16, marginLeft: 15, color: "#333" },
+  cancelButton: { paddingVertical: 18, alignItems: "center", marginTop: 10 },
+  cancelButtonText: { fontSize: 16, color: "#820D0D", fontWeight: "600" },
 });
