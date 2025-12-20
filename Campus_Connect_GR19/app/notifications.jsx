@@ -39,3 +39,23 @@ export const notifyAnswerToQuestion = async (questionText) => {
     trigger: null,
   });
 };
+
+export const notifyCallAttempt = async () => {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "📞 Thirrje",
+      body: "Po tenton të kontaktosh pronarin e postimit.",
+    },
+    trigger: null, 
+  });
+};
+
+export const newEventAdded = async (eventName) => {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "New Event!",
+      body: `Nje event i ri po organizohet: ${eventName}. Informohu tani!`,
+    },
+    trigger: null, 
+  });
+};

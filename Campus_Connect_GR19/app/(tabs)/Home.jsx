@@ -8,7 +8,11 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import {
+  registerLocalNotifications,
+  newEventAdded
+} from "../notifications";
+import { useEffect, useState, useRef } from "react";
 import { Text, View } from "react-native";
 import { screenWidth } from "./_layout";
 import { db } from "../../firebase";
@@ -18,12 +22,30 @@ export default function TabOneScreen() {
   const { user, loading } = useAuth();
   const [events, setEvents] = useState([]);
 
+  const initialLoad = useRef(true);
+
+  useEffect(() => {
+    registerLocalNotifications();
+  }, []);
+  
   useEffect(() => {
     if (loading || !user) return;
 
     const q = query(collection(db, "events"), orderBy("createdAt", "desc"));
 
     const unsub = onSnapshot(q, (snapshot) => {
+
+    if (!initialLoad.current) {
+      snapshot.docChanges().forEach((change) => {
+        if (change.type === "added") {
+          const event = change.doc.data();
+          newEventAdded(event.title);
+        }
+      });
+    }
+
+    initialLoad.current = false;
+
       const data = snapshot.docs.map((d) => ({
         id: d.id,
         ...d.data(),

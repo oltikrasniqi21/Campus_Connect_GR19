@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   FlatList,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import QnACard from "../../components/Homepage/Q&ACard";
 import { auth, db } from "../../firebase";
@@ -61,7 +61,7 @@ export default function QandAScreen() {
   const [searchText, setSearchText] = useState("");
   const [sortBy, setSortBy] = useState("date");
 
-  const handleUpvote = async (id, upvotes = []) => {
+  const handleUpvote = useCallback(async (id, upvotes = []) => {
     const questionRef = doc(db, "questions", id);
     const userId = auth.currentUser.uid;
 
@@ -78,7 +78,7 @@ export default function QandAScreen() {
     } catch (error) {
       console.log("Error upvoting question: ", error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, "questions"), (snapshot) => {
@@ -136,10 +136,10 @@ export default function QandAScreen() {
     }
   };
 
-  const startEditing = (item) => {
+  const startEditing = useCallback((item) => {
     setEditingId(item.id);
     setEditingText(item.question);
-  };
+  }, []);
 
   const saveEdit = async () => {
     if (!editingId || editingText.trim() === "") {
@@ -154,9 +154,9 @@ export default function QandAScreen() {
     setEditingText("");
   };
 
-  const deleteQuestion = async (id) => {
+  const deleteQuestion = useCallback(async (id) => {
     await deleteDoc(doc(db, "questions", id));
-  };
+  }, []);
 
   const filteredQuestions = questions.filter((q) =>
     q.question.toLowerCase().includes(searchText.toLowerCase())

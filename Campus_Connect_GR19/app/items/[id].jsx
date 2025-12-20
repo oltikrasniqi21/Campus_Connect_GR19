@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -8,13 +8,71 @@ import {
   TouchableOpacity,
   Platform,
   StatusBar,
+  ActivityIndicator,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocalSearchParams } from "expo-router";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../../firebase";
+import { Linking } from "react-native";
+import {
+  registerLocalNotifications,
+  notifyCallAttempt,
+} from "../notifications";
 
 export default function ItemDetails() {
-  const params = useLocalSearchParams();
-  const isLost = params.status === "Lost";
+  const { itemId, userId } = useLocalSearchParams();
+
+  const [item, setItem] = useState(null);
+  const [postUser, setPostUser] = useState(null);
+
+  useEffect(() => {
+    registerLocalNotifications();
+  }, []);
+
+  useEffect(() => {
+    if (!itemId) return;
+
+    return onSnapshot(doc(db, "lost_found_items", itemId), (snap) => {
+      if (snap.exists()) {
+        setItem({ id: snap.id, ...snap.data() });
+      }
+    });
+  }, [itemId]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    return onSnapshot(doc(db, "users", userId), (snap) => {
+      if (snap.exists()) {
+        setPostUser(snap.data());
+      }
+    });
+  }, [userId]);
+
+  if (!item || !postUser) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator size="large" color="#820D0D" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const handleCall = async () => {
+    await notifyCallAttempt();
+  };
+
+  const handleEmail = async () => {
+    if (!postUser?.email) return;
+
+    Linking.openURL(`mailto:${postUser.email}`);
+  };
+
+  const isLost = item.status === "Lost";
 
   return (
     <SafeAreaView style={styles.container}>
@@ -22,9 +80,7 @@ export default function ItemDetails() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={{ height: 20 }} />
-
-        <Image source={{ uri: params.photo }} style={styles.image} />
+        <Image source={{ uri: item.photo }} style={styles.image} />
 
         <View style={styles.content}>
           <View
@@ -39,29 +95,36 @@ export default function ItemDetails() {
                 { color: isLost ? "#C80000" : "#2E7D32" },
               ]}
             >
-              {params.status}
+              {item.status}
             </Text>
           </View>
 
-          <Text style={styles.itemTitle}>{params.title}</Text>
-          <Text style={styles.location}>📍 {params.location}</Text>
-          <Text style={styles.description}>{params.description}</Text>
+          <Text style={styles.itemTitle}>{item.title}</Text>
+          <Text style={styles.location}>📍 {item.location}</Text>
+          <Text style={styles.description}>{item.description}</Text>
         </View>
 
         <View style={styles.infoBox}>
           <Text style={styles.infoTitle}>Additional Information</Text>
           <Text style={styles.infoText}>
-            {params.additionalInfo || "No additional information provided."}
+            {item.additionalInfo || "No additional information provided."}
           </Text>
         </View>
 
         <View style={styles.posterWrapper}>
           <View style={styles.posterRow}>
-            <Image source={{ uri: params.pfp }} style={styles.posterImage} />
+            <Image
+              source={{ uri: postUser.photoURL }}
+              style={styles.posterImage}
+            />
 
             <View style={{ marginLeft: 12 }}>
-              <Text style={styles.posterName}>{params.postedBy}</Text>
-              <Text style={styles.posterTime}>{params.postedTime}</Text>
+              <Text style={styles.posterName}>
+                {postUser.firstname} {postUser.lastname}
+              </Text>
+              <Text style={styles.posterTime}>
+                {new Date(item.postedTime?.toDate()).toLocaleString()}
+              </Text>
             </View>
           </View>
 
@@ -69,19 +132,19 @@ export default function ItemDetails() {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.callButton}>
+          <TouchableOpacity onPress={handleCall} style={styles.callButton}>
             <Text style={styles.callText}>📞 Call Now</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.messageButton}>
+          <TouchableOpacity onPress={handleEmail} style={styles.messageButton}>
             <Text style={styles.messageText}>✉️ Send Email</Text>
           </TouchableOpacity>
         </View>
-        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -107,7 +170,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
 
-  content: { 
+  content: {
     paddingBottom: 10,
   },
 
@@ -161,10 +224,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  infoText: { 
-    color: "#333", 
-    fontSize: 15, 
-    lineHeight: 22 
+  infoText: {
+    color: "#333",
+    fontSize: 15,
+    lineHeight: 22,
   },
   posterWrapper: {
     marginTop: 25,
@@ -234,10 +297,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
 
-  callText: { 
-    color: "#fff", 
-    fontWeight: "700", 
-    fontSize: 17 
+  callText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 17,
   },
 
   messageButton: {
@@ -253,10 +316,9 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
 
-  messageText: { 
-    color: "#333", 
-    fontWeight: "700", 
-    fontSize: 17 
+  messageText: {
+    color: "#333",
+    fontWeight: "700",
+    fontSize: 17,
   },
 });
-

@@ -1,10 +1,9 @@
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { addDoc, collection, doc, getDoc, Timestamp } from "firebase/firestore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Alert,
-  Image,
   Modal,
   Platform,
   ScrollView,
@@ -15,9 +14,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+} from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
+import { useCallback } from "react";
 
 export default function PostLFItem() {
   const { user, loading } = useAuth();
@@ -32,56 +38,98 @@ export default function PostLFItem() {
   const [error, setError] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
 
-  const pickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const imageScale = useSharedValue(0.9);
+  const imageOpacity = useSharedValue(0);
 
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission required",
-        "Permission to access media library is required!"
-      );
-      return;
-    }
+  useEffect(() => {
+    if (!photo) return;
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      aspect: [1, 1],
-      base64: true,
-      quality: 0.5,
+    imageScale.value = 0.9;
+    imageOpacity.value = 0;
+
+    imageScale.value = withSpring(1, {
+      damping: 12,
+      stiffness: 120,
     });
 
-    if (!result.canceled) {
-      const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
-      setPhoto(base64Img);
-    }
-  };
+    imageOpacity.value = withTiming(1, { duration: 200 });
+  }, [photo]);
 
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+  const imageAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: imageOpacity.value,
+    transform: [{ scale: imageScale.value }],
+  }));
 
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission required",
-        "Permission to access camera is required!"
-      );
-      return;
-    }
+const pickImage = useCallback(async () => {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [1, 1],
-      base64: true,
-      quality: 0.5,
-    });
+  if (status !== "granted") {
+    setError("Permission to access media library is required!");
+    return;
+  }
 
-    if (!result.canceled) {
-      const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
-      setPhoto(base64Img);
-    }
-  };
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ["images"],
+    allowsEditing: true,
+    aspect: [1, 1],
+    base64: true,
+    quality: 0.5,
+  });
 
-  const handleSubmit = async () => {
+  if (result.canceled) return;
+
+  try {
+    const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
+    setPhoto(base64Img);
+    setError("");
+  } catch (err) {
+    console.error(err);
+    setError("Failed to process image.");
+  }
+}, []);
+
+  const takePhoto = useCallback(async () => {
+  const { status } = await ImagePicker.requestCameraPermissionsAsync();
+
+  if (status !== "granted") {
+    setError("Permission to access camera is required!");
+    return;
+  }
+
+  const result = await ImagePicker.launchCameraAsync({
+    allowsEditing: true,
+    aspect: [1, 1],
+    base64: true,
+    quality: 0.5,
+  });
+
+  if (result.canceled) return;
+
+  try {
+    const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
+    setPhoto(base64Img);
+    setError("");
+  } catch (err) {
+    console.error(err);
+    setError("Failed to process photo.");
+  }
+}, []);
+
+
+const openImagePicker = useCallback(() => {
+  Alert.alert(
+    "Upload Photo",
+    "Choose an option",
+    [
+      { text: "Take Photo", onPress: takePhoto },
+      { text: "Choose from Library", onPress: pickImage },
+      { text: "Cancel", style: "cancel" },
+    ],
+    { cancelable: true }
+  );
+}, [pickImage, takePhoto]);
+
+  const handleSubmit = useCallback(async () => {
     if (loading || !user) {
       setError("User not authenticated.");
       return;
@@ -145,7 +193,7 @@ export default function PostLFItem() {
       console.error("Error saving item:", err);
       setError("Something went wrong");
     }
-  };
+  }, [loading, user, postType, title, description, location, additionalInfo, photo]);
 
   const closeModal = () => {
     setModalVisible(false);
@@ -158,60 +206,40 @@ export default function PostLFItem() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={{ height: 20 }} />
-
         <View style={styles.postTypeContainer}>
-          <TouchableOpacity
-            style={[
-              styles.typeButton,
-              postType === "Lost" && styles.activeLost,
-            ]}
-            onPress={() => setPostType("Lost")}
-          >
-            <Text
+          {["Lost", "Found"].map((type) => (
+            <TouchableOpacity
+              key={type}
               style={[
-                styles.typeText,
-                postType === "Lost" && styles.activeLostText,
+                styles.typeButton,
+                postType === type &&
+                  (type === "Lost" ? styles.activeLost : styles.activeFound),
               ]}
+              onPress={() => setPostType(type)}
             >
-              Lost
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.typeButton,
-              postType === "Found" && styles.activeFound,
-            ]}
-            onPress={() => setPostType("Found")}
-          >
-            <Text
-              style={[
-                styles.typeText,
-                postType === "Found" && styles.activeFoundText,
-              ]}
-            >
-              Found
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.typeText,
+                  postType === type &&
+                    (type === "Lost"
+                      ? styles.activeLostText
+                      : styles.activeFoundText),
+                ]}
+              >
+                {type}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        {error ? (
-          <Text style={{ color: "red", marginBottom: 10 }}>{error}</Text>
-        ) : null}
+        {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
 
         <Text style={styles.label}>Title</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g. Lost calculator near FIEK"
-          value={title}
-          onChangeText={setTitle}
-        />
+        <TextInput style={styles.input} value={title} onChangeText={setTitle} />
 
         <Text style={styles.label}>Description</Text>
         <TextInput
           style={[styles.input, { height: 100 }]}
-          placeholder="Describe details like color, brand, etc."
           multiline
           value={description}
           onChangeText={setDescription}
@@ -220,39 +248,28 @@ export default function PostLFItem() {
         <Text style={styles.label}>Location</Text>
         <TextInput
           style={styles.input}
-          placeholder="Where item was lost or found"
           value={location}
           onChangeText={setLocation}
         />
 
         <Text style={styles.label}>Additional Information</Text>
-        <View style={styles.infoBox}>
-          <TextInput
-            style={[styles.infoInput, { height: 100 }]}
-            placeholder="Add extra details here (e.g. scratches, stickers, unique marks)"
-            multiline
-            value={additionalInfo}
-            onChangeText={setAdditionalInfo}
-          />
-        </View>
+        <TextInput
+          style={[styles.input, { height: 100 }]}
+          multiline
+          value={additionalInfo}
+          onChangeText={setAdditionalInfo}
+        />
 
         <Text style={styles.label}>Upload Photo</Text>
-        <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
+        <TouchableOpacity style={styles.uploadBox} onPress={openImagePicker}>
           {photo ? (
-            <Image source={{ uri: photo }} style={styles.previewImage} />
+            <Animated.Image
+              source={{ uri: photo }}
+              style={[styles.previewImage, imageAnimatedStyle]}
+            />
           ) : (
             <Text style={styles.uploadText}>📷 Tap to upload photo</Text>
           )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            { backgroundColor: "#555", marginTop: 12 },
-          ]}
-          onPress={takePhoto}
-        >
-          <Text style={styles.submitText}>Take Photo</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
@@ -266,7 +283,6 @@ export default function PostLFItem() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Item posted successfully!</Text>
-
             <TouchableOpacity onPress={closeModal}>
               <Text style={styles.modalBtn}>OK</Text>
             </TouchableOpacity>
@@ -388,5 +404,6 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
     textAlign: "center",
+    previewImage: { width: "100%", height: "100%", borderRadius: 8 },
   },
 });
