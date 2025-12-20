@@ -80,15 +80,12 @@ export default function Signup() {
       email: user.email,
     });
    
-     setLoading(false);
-      setModalVisible(true);
+     setModalVisible(true);
     } catch (error) {
-      console.log("error", error);
-      setLoading(false);
       if (error.code === "auth/email-already-in-use") {
         setError("Email already exists.");
       } else {
-        setError(error.message);
+        setError(error.message || "Something went wrong.");
       }
     } finally {
       setLoading(false);

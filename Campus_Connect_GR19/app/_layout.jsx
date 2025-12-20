@@ -1,12 +1,12 @@
+import { useColorScheme } from "@/components/useColorScheme";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
+import { Dimensions, StyleSheet, Text } from "react-native";
 import "react-native-reanimated";
-import { useColorScheme } from "@/components/useColorScheme";
-import { Text, StyleSheet, Dimensions } from "react-native";
 import { AuthProvider } from "../context/AuthContext";
 
 export const unstable_settings = {
@@ -50,8 +50,20 @@ function RootLayoutNav() {
   return (
     <AuthProvider>    
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack
+        screenOptions={{
+          headerBackTitleVisible: false,
+          headerBackTitle: "",
+          headerBackButtonDisplayMode: "minimal",
+        }}
+      >
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: false,
+            title:"" ,
+          }}
+        />
 
         <Stack.Screen
           name="postLFItem"
@@ -99,9 +111,13 @@ function sharedHeaderOptions(title) {
     headerTintColor: "#fff",
     headerTitleAlign: "center",
     headerShadowVisible: false,
+
+    headerBackTitle: "",
     headerBackTitleVisible: false,
+    headerBackButtonDisplayMode: "minimal",
   };
 }
+
 
 const styles = StyleSheet.create({
   headerText: {
@@ -110,3 +126,4 @@ const styles = StyleSheet.create({
     fontFamily: "Montserrat",
   },
 });
+// Set an explicit title so back button doesn't show "(tabs)"
