@@ -1,4 +1,4 @@
-import React, { use, useState, useRef } from "react";
+import React, { memo, useState, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -11,7 +11,7 @@ import {
 import { auth, db } from "../../firebase";
 import { arrayRemove, doc, updateDoc } from "firebase/firestore";
 
-export default function QnACard({
+const QnACard = React.memo(({
   item,
   selectedQuestionId,
   newAnswer,
@@ -25,7 +25,7 @@ export default function QnACard({
   saveEdit,
   deleteQuestion,
   handleUpvote,
-}) {
+}) => {
   const [editingAnswerId, setEditingAnswerId] = useState(null);
   const [editingAnswerText, setEditingAnswerText] = useState("");
 
@@ -236,7 +236,9 @@ export default function QnACard({
       ) : null}
     </View>
   );
-}
+});
+
+export default memo(QnACard);
 
 const styles = StyleSheet.create({
   qnaCard: {
