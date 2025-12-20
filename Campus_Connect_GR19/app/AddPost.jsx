@@ -51,15 +51,6 @@ export default function AddEvent() {
     return () => unsubscribe();
   }, []);
 
-  const generateRandomEventImage = () => {
-    const width = 800;
-    const height = 600;
-    const seed = Math.random().toString(36).substring(2);
-    return `https://picsum.photos/${width}/${height}?random=${seed}`;
-  };
-
- 
-
   const handleAddPhotoPress = () => {
     if (Platform.OS === "ios") {
       ActionSheetIOS.showActionSheetWithOptions(
@@ -196,7 +187,7 @@ export default function AddEvent() {
       return;
     }
 
-    const finalEventImage = eventPhoto || generateRandomEventImage();
+    const finalEventImage = eventPhoto ? eventPhoto : null;
 
     const newEvent = {
       title: eventTitle,
