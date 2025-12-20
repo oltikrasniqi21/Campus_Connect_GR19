@@ -10,8 +10,8 @@ import {
   View,
   Modal,
   Image,
+  Platform,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { db } from "../firebase";
 import { collection, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
@@ -25,9 +25,16 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from "react-native-reanimated";
-import { memo} from "react";
+import { memo } from "react";
 
-const AnimatedCard = memo (function AnimatedCard({ item, postUser, onDelete, onPress, timeAgo, isOwner }) {
+const AnimatedCard = memo(function AnimatedCard({
+  item,
+  postUser,
+  onDelete,
+  onPress,
+  timeAgo,
+  isOwner,
+}) {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -221,47 +228,43 @@ export default function LFManager() {
       </View>
     </Animated.View>
   );
-const handlePress = useCallback(
-  (item) => {
-    router.push({
-      pathname: `/items/${item.id}`,
-      params: {
-        itemId: item.id,
-        userId: item.userId,
-      },
-    });
-  },
-  [router]
-);
+  const handlePress = useCallback(
+    (item) => {
+      router.push({
+        pathname: `/items/${item.id}`,
+        params: {
+          itemId: item.id,
+          userId: item.userId,
+        },
+      });
+    },
+    [router]
+  );
 
-const handleDelete = useCallback(
-  (id) => {
+  const handleDelete = useCallback((id) => {
     deleteItem(id);
-  },
-  []
-);
+  }, []);
 
-const renderItem = useCallback(
-  ({ item }) => {
-    const postUser = usersMap[item.userId];
+  const renderItem = useCallback(
+    ({ item }) => {
+      const postUser = usersMap[item.userId];
 
-    return (
-      <AnimatedCard
-        item={item}
-        postUser={postUser}
-        isOwner={user?.id === item.userId}
-        timeAgo={timeAgo}
-        onPress={() => handlePress(item)}
-        onDelete={() => handleDelete(item.id)}
-      />
-    );
-  },
-  [usersMap, user?.id, timeAgo, handlePress, handleDelete]
-);
-
+      return (
+        <AnimatedCard
+          item={item}
+          postUser={postUser}
+          isOwner={user?.id === item.userId}
+          timeAgo={timeAgo}
+          onPress={() => handlePress(item)}
+          onDelete={() => handleDelete(item.id)}
+        />
+      );
+    },
+    [usersMap, user?.id, timeAgo, handlePress, handleDelete]
+  );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="light-content" />
 
       <View style={styles.searchContainer}>
@@ -347,18 +350,21 @@ const renderItem = useCallback(
           </Animated.View>
         </View>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8F8F8" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F8F8F8",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight + 8 : 12,
+  },
 
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
     marginHorizontal: 16,
-    marginTop: 12,
     borderRadius: 25,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -366,6 +372,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowOffset: { width: 0, height: 2 },
+    paddingTop: 6,
   },
   searchInput: { flex: 1, marginHorizontal: 8, color: "#333" },
   card: {
