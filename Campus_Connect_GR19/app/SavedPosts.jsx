@@ -75,13 +75,13 @@ export default function SavedPosts() {
   };
 
   const renderFolderItem = useCallback(({ item }) => (
-    <TouchableOpacity style={styles.folderCard} onPress={() => openFolder(item)}>
+    <TouchableOpacity style={styles.folderCard} onPress={() => openFolder(item)} testID={`folder-${item.id}`}>
       <View style={styles.folderContent}>
         <View style={{ flex: 1 }}>
           <Text style={styles.folderTitle} numberOfLines={1}>{item.name}</Text>
           <Text style={styles.folderSubtitle}>Folder</Text>
         </View>
-        <TouchableOpacity style={styles.editButton} onPress={() => openEditModal(item)}>
+        <TouchableOpacity style={styles.editButton} onPress={() => openEditModal(item)} testID={`edit-folder-${item.id}`}>
           <Text style={styles.editButtonText}>Edit</Text>
         </TouchableOpacity>
       </View>
@@ -156,13 +156,13 @@ export default function SavedPosts() {
               placeholder="Folder name"
               style={styles.input}
             />
-            <Pressable onPress={renameFolder} style={styles.saveButton}>
+            <Pressable onPress={renameFolder} style={styles.saveButton} testID="rename-folder-button">
               <Text style={styles.buttonText}>Rename</Text>
             </Pressable>
-            <Pressable onPress={() => deleteFolder(selectedFolder.id)} style={styles.deleteButton}>
+            <Pressable  onPress={() => deleteFolder(selectedFolder.id)} style={styles.deleteButton} testID="delete-folder-button">
               <Text style={styles.buttonText}>Delete Folder</Text>
             </Pressable>
-            <Pressable onPress={() => setEditModalVisible(false)} style={styles.cancelButton}>
+            <Pressable onPress={() => setEditModalVisible(false)} style={styles.cancelButton} testID="cancel-folder-button">
               <Text style={styles.cancelText}>Cancel</Text>
             </Pressable>
           </View>

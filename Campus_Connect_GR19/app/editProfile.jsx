@@ -3,7 +3,6 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
-  memo,
 } from "react";
 import {
   View,
@@ -14,10 +13,8 @@ import {
   Image,
   ScrollView,
   Alert,
-  Platform,
   Modal,
   Animated,
-  ActionSheetIOS,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -40,15 +37,14 @@ export default function EditProfile() {
   const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
-  if (showImagePickerModal) {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-  }
-}, [showImagePickerModal]);
-
+    if (showImagePickerModal) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showImagePickerModal]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -74,7 +70,6 @@ export default function EditProfile() {
   const processImage = useCallback(async (uri) => {
     try {
       setUploading(true);
-
       const manipulated = await ImageManipulator.manipulateAsync(
         uri,
         [{ resize: { width: 300, height: 300 } }],
@@ -84,7 +79,6 @@ export default function EditProfile() {
           base64: true,
         }
       );
-
       const base64String = `data:image/jpeg;base64,${manipulated.base64}`;
       setProfilePicture(base64String);
     } catch (error) {
@@ -101,14 +95,12 @@ export default function EditProfile() {
       Alert.alert("Permission required", "Camera access is required.");
       return;
     }
-
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
     });
-
     if (!result.canceled) {
       await processImage(result.assets[0].uri);
     }
@@ -120,42 +112,29 @@ export default function EditProfile() {
       Alert.alert("Permission required", "Media library access is required.");
       return;
     }
-
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
     });
-
     if (!result.canceled) {
       await processImage(result.assets[0].uri);
     }
   }, [processImage]);
 
-  const handleChangePicture = useCallback(async () => {
-    if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ["Cancel", "Take Photo", "Choose from Library"],
-          cancelButtonIndex: 0,
-        },
-        async (buttonIndex) => {
-          if (buttonIndex === 1) await pickFromCamera();
-          if (buttonIndex === 2) await pickFromLibrary();
-        }
-      );
-    } else {
-      setShowImagePickerModal(true);
-    }
-  }, [pickFromCamera, pickFromLibrary]);
-
-  const closeImagePickerModal = () => {
+  const closeImagePickerModal = (onFinishedCallback) => {
     Animated.timing(fadeAnim, {
-    toValue: 0,
-    duration: 200,
-    useNativeDriver: true,
-  }).start(() => setShowImagePickerModal(false));
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowImagePickerModal(false);
+  
+      if (onFinishedCallback && typeof onFinishedCallback === 'function') {
+        setTimeout(onFinishedCallback, 100);
+      }
+    });
   };
 
   const handleSave = useCallback(async () => {
@@ -163,7 +142,6 @@ export default function EditProfile() {
       Alert.alert("Error", "No user logged in");
       return;
     }
-
     setUploading(true);
     try {
       await updateDoc(doc(db, "users", currentUser.uid), {
@@ -172,24 +150,15 @@ export default function EditProfile() {
         bio: bio,
         photoURL: profilePicture,
       });
-
       Alert.alert("Success", "Profile updated successfully!");
       router.back();
     } catch (err) {
       console.error("Error saving profile:", err);
-      if (err.toString().includes("exceeds the maximum allowed size")) {
-        Alert.alert(
-          "Error",
-          "Image is still too large. Please try a simpler photo."
-        );
-      } else {
-        Alert.alert("Error", "Failed to save profile.");
-      }
+      Alert.alert("Error", "Failed to save profile.");
     } finally {
       setUploading(false);
     }
   }, [currentUser, firstName, lastName, bio, profilePicture, router]);
-
 
   const avatarSource = useMemo(() => {
     return profilePicture
@@ -197,59 +166,13 @@ export default function EditProfile() {
       : require("../assets/images/avatar-placeholder.png");
   }, [profilePicture]);
 
-
-  const ImagePickerModal = memo(() => (
-    <Animated.View style={[styles.modalContent, { opacity: fadeAnim }]}>
-    <Modal
-      visible={showImagePickerModal}
-      transparent
-      animationType="fade"
-      onRequestClose={() => setShowImagePickerModal(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <TouchableOpacity
-            style={styles.modalOption}
-            onPress={() => {
-              closeImagePickerModal();
-              pickFromCamera();
-            }}
-          >
-            <Ionicons name="camera-outline" size={24} color="#333" />
-            <Text style={styles.modalOptionText}>Take Photo</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.modalOption}
-            onPress={() => {
-              closeImagePickerModal()
-              pickFromLibrary();
-            }}
-          >
-            <Ionicons name="images-outline" size={24} color="#333" />
-            <Text style={styles.modalOptionText}>Choose from Library</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={closeImagePickerModal}
-          >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  </Animated.View>
-  ));
-
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.avatarSection}>
         <Image source={avatarSource} style={styles.avatar} resizeMode="cover" />
-
         <TouchableOpacity
           style={[styles.changePicBtn, uploading && styles.disabledBtn]}
-          onPress={handleChangePicture}
+          onPress={() => setShowImagePickerModal(true)}
           disabled={uploading}
         >
           {uploading ? (
@@ -265,11 +188,17 @@ export default function EditProfile() {
 
       <View style={styles.form}>
         <Text style={styles.label}>First Name</Text>
-        <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} />
-
+        <TextInput
+          style={styles.input}
+          value={firstName}
+          onChangeText={setFirstName}
+        />
         <Text style={styles.label}>Last Name</Text>
-        <TextInput style={styles.input} value={lastName} onChangeText={setLastName} />
-
+        <TextInput
+          style={styles.input}
+          value={lastName}
+          onChangeText={setLastName}
+        />
         <Text style={styles.label}>Bio</Text>
         <TextInput
           style={[styles.input, styles.bioInput]}
@@ -287,13 +216,46 @@ export default function EditProfile() {
             {uploading ? "Saving..." : "Save"}
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
       </View>
 
-      <ImagePickerModal />
+      <Modal
+        visible={showImagePickerModal}
+        transparent
+        animationType="none" 
+        onRequestClose={() => closeImagePickerModal()}
+      >
+        <View style={styles.modalOverlay}>
+          <Animated.View 
+            style={[styles.modalContent, { opacity: fadeAnim, transform: [{translateY: fadeAnim.interpolate({inputRange: [0, 1], outputRange: [100, 0]})}] }]}
+          >
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => closeImagePickerModal(pickFromCamera)}
+            >
+              <Ionicons name="camera-outline" size={24} color="#333" />
+              <Text style={styles.modalOptionText}>Take Photo</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => closeImagePickerModal(pickFromLibrary)}
+            >
+              <Ionicons name="images-outline" size={24} color="#333" />
+              <Text style={styles.modalOptionText}>Choose from Library</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => closeImagePickerModal()}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }

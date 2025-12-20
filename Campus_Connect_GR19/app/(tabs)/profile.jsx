@@ -291,7 +291,9 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
-  profileSection: { alignItems: "center", marginBottom: 15 },
+  profileSection: { 
+    alignItems: "center", 
+    marginBottom: 15 },
   avatar: {
     width: 110,
     height: 110,
@@ -300,31 +302,62 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "#E0DDD5",
   },
-  nameRow: { flexDirection: "row", alignItems: "center" },
-  fullName: { fontSize: 22, fontWeight: "bold", color: "#656565" },
+  nameRow: { 
+    flexDirection: "row", 
+    alignItems: "center" },
+  fullName: { 
+    fontSize: 22, 
+    fontWeight: "bold", 
+    color: "#656565" },
   editIcon: { marginLeft: 8 },
-  subtitle: { fontSize: 14, color: "#898580", marginTop: 4 },
-  email: { fontSize: 16, color: "#898580", marginTop: 4 },
-  postsContainer: { paddingBottom: 100, paddingHorizontal: 5 },
-  postItem: { width:"30%",marginHorizontal:5, marginBottom: 15, alignItems: "center" },
+  subtitle: { 
+    fontSize: 14, 
+    color: "#898580", 
+    marginTop: 4 },
+  email: { 
+    fontSize: 16, 
+    color: "#898580", 
+    marginTop: 4 },
+  postsContainer: { 
+    paddingBottom: 100, 
+    paddingHorizontal: 5 },
+  postItem: { 
+    width:"30%",
+    marginHorizontal:5, 
+    marginBottom: 15, 
+    alignItems: "center" },
   postImage: {
     width: "100%",
     aspectRatio: 1,
     borderRadius: 12,
     backgroundColor: "#E0DDD5",
   },
-  postTitle: { marginTop: 6, fontSize: 13, color: "#656565", textAlign: "center" },
-  placeholderImage: { justifyContent: "center", alignItems: "center" },
+  postTitle: { 
+    marginTop: 6, 
+    fontSize: 13, 
+    color: "#656565", 
+    textAlign: "center" },
+  placeholderImage: { 
+    justifyContent: "center", 
+    alignItems: "center" },
   tabsContainer: {
     flexDirection: "row",
     justifyContent: "space-around",
     marginBottom: 15,
   },
-  tab: { paddingVertical: 8, paddingHorizontal: 15, borderBottomWidth: 2 },
+  tab: { 
+    paddingVertical: 8,
+    paddingHorizontal: 15, 
+    borderBottomWidth: 2 },
   activeTab: { borderBottomColor: "#820D0D" },
-  tabText: { fontSize: 16, color: "#888", fontWeight: "600" },
+  tabText: { 
+    fontSize: 16, 
+    color: "#888", 
+    fontWeight: "600" },
   activeTabText: { color: "#820D0D" },
-  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.3)" },
+  overlay: { 
+    flex: 1, 
+    backgroundColor: "rgba(0,0,0,0.3)" },
   menuContainer: {
     position: "absolute",
     top: 0,
@@ -334,11 +367,24 @@ const styles = StyleSheet.create({
     backgroundColor: "#820D0D",
     padding: 20,
   },
-  menuTitle: { fontSize: 20, color: "#fff", fontWeight: "bold", marginBottom: 20 },
-  menuItem: { flexDirection: "row", alignItems: "center", marginVertical: 15 },
-  menuText: { color: "#fff", fontSize: 16, marginLeft: 10 },
+  menuTitle: {
+    fontSize: 20, 
+    color: "#fff", 
+    fontWeight: "bold", 
+    marginBottom: 20 },
+  menuItem: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    marginVertical: 15 },
+  menuText: { 
+    color: "#fff", 
+    fontSize: 16, 
+    marginLeft: 10 },
   spacer: { flex: 1 },
-  logoutButton: { flexDirection: "row", alignItems: "center", marginBottom: 20 },
+  logoutButton: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    marginBottom: 20 },
   columnWrapper: {
   justifyContent: "space-between",
 },

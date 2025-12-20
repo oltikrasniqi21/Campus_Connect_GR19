@@ -1,19 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`LFManager Snapshot renders correctly (empty state) 1`] = `
-<RNCSafeAreaView
-  edges={
-    {
-      "bottom": "additive",
-      "left": "additive",
-      "right": "additive",
-      "top": "additive",
-    }
-  }
+<View
   style={
     {
       "backgroundColor": "#F8F8F8",
       "flex": 1,
+      "paddingTop": 12,
     }
   }
 >
@@ -26,8 +19,8 @@ exports[`LFManager Snapshot renders correctly (empty state) 1`] = `
         "elevation": 4,
         "flexDirection": "row",
         "marginHorizontal": 16,
-        "marginTop": 12,
         "paddingHorizontal": 12,
+        "paddingTop": 6,
         "paddingVertical": 8,
         "shadowColor": "#000",
         "shadowOffset": {
@@ -38,7 +31,7 @@ exports[`LFManager Snapshot renders correctly (empty state) 1`] = `
       }
     }
   >
-    <Text />
+    <View />
     <TextInput
       onChangeText={[Function]}
       placeholder="Search"
@@ -52,7 +45,7 @@ exports[`LFManager Snapshot renders correctly (empty state) 1`] = `
       }
       value=""
     />
-    <Text />
+    <View />
   </View>
   <RCTScrollView
     ListEmptyComponent={[Function]}
@@ -88,7 +81,7 @@ exports[`LFManager Snapshot renders correctly (empty state) 1`] = `
             }
           }
         >
-          <Text />
+          <View />
           <Text
             style={
               {
@@ -117,5 +110,5 @@ exports[`LFManager Snapshot renders correctly (empty state) 1`] = `
       </View>
     </View>
   </RCTScrollView>
-</RNCSafeAreaView>
+</View>
 `;
