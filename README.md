@@ -20,12 +20,12 @@ Aplikacioni integron **zbulimin e ngjarjeve**, **menaxhimin e sendave të humbur
 
 ### Lost & Found
 - Shfleto të gjitha sendet e raportuara si **Humbur** ose **Gjetur**  
-- Filtroni sipas statusit, shikoni detajet e sendit ose postoni një raport të ri  
+- Filtroni sipas statusit, shikoni detajet e gjësendit ose postoni një raport të ri  
 - Butoni lëvizës **“+”** lejon akses të shpejtë në formën e postimit
 
 ### Saved Items
-- Mbaj gjurmët e sendeve tuaja **të preferuara ose të rëndësishme**  
-- Sendet e ruajtura shfaqen këtu  
+- Mbaj gjurmët e postimeve tuaja **të preferuara ose të rëndësishme**  
+- Postimet e ruajtura shfaqen këtu  
 - Lejon përdoruesit të rikthehen dhe të ndjekin përditësimet e sendeve të ruajtura  
 - Organizoni postimet në dosje
 
@@ -43,11 +43,23 @@ Aplikacioni integron **zbulimin e ngjarjeve**, **menaxhimin e sendave të humbur
 - Ndryshoni të dhënat tuaja direkt nga ekrani i profilit  
 - Kliko ikonën e menusë për më shumë funksionalitete si "dalja", "të ruajturat", "ndrysho detajet e llogarisë" etj.
 
-## Future Enhancements
+## Updates e reja
 
-- Njoftime push për ngjarje të reja dhe sende të gjetura  
-- Pamje me hartë për vendndodhjet e ngjarjeve dhe sendeve  
-- Ngarko një foto direkt nga pajisja para se të postosh
+- **Direct Photo Upload**  
+  Mundësi për të:
+  - ngarkuar foto direkt nga kamera ose galeria e pajisjes  
+  - përmirësuar cilësinë dhe besueshmërinë e postimeve
+    
+- **Local Notifications**  
+  Njoftime në kohë reale për:
+  - ngjarje të reja në kampus  
+  - sende të gjetura që përputhen me interesat e përdoruesit  
+
+## Foto nga aplikacionni
+### Lost & Found
+![Lost & Found](docs/Lost&Found.png)
+![MoreButton](docs/MoreButton.png)
+![PostLFITem](docs/PostLFItem.png)
 
 ## Antarët e grupit
 
