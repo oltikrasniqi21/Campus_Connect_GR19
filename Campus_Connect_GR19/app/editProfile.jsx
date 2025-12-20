@@ -16,6 +16,7 @@ import {
   Alert,
   Platform,
   Modal,
+  Animated,
   ActionSheetIOS,
   ActivityIndicator,
 } from "react-native";
@@ -36,6 +37,18 @@ export default function EditProfile() {
   const [profilePicture, setProfilePicture] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+  if (showImagePickerModal) {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }
+}, [showImagePickerModal]);
+
 
   useEffect(() => {
     if (!currentUser) return;
@@ -137,6 +150,14 @@ export default function EditProfile() {
     }
   }, [pickFromCamera, pickFromLibrary]);
 
+  const closeImagePickerModal = () => {
+    Animated.timing(fadeAnim, {
+    toValue: 0,
+    duration: 200,
+    useNativeDriver: true,
+  }).start(() => setShowImagePickerModal(false));
+  };
+
   const handleSave = useCallback(async () => {
     if (!currentUser) {
       Alert.alert("Error", "No user logged in");
@@ -178,10 +199,11 @@ export default function EditProfile() {
 
 
   const ImagePickerModal = memo(() => (
+    <Animated.View style={[styles.modalContent, { opacity: fadeAnim }]}>
     <Modal
       visible={showImagePickerModal}
       transparent
-      animationType="slide"
+      animationType="fade"
       onRequestClose={() => setShowImagePickerModal(false)}
     >
       <View style={styles.modalOverlay}>
@@ -189,7 +211,7 @@ export default function EditProfile() {
           <TouchableOpacity
             style={styles.modalOption}
             onPress={() => {
-              setShowImagePickerModal(false);
+              closeImagePickerModal();
               pickFromCamera();
             }}
           >
@@ -200,7 +222,7 @@ export default function EditProfile() {
           <TouchableOpacity
             style={styles.modalOption}
             onPress={() => {
-              setShowImagePickerModal(false);
+              closeImagePickerModal()
               pickFromLibrary();
             }}
           >
@@ -210,13 +232,14 @@ export default function EditProfile() {
 
           <TouchableOpacity
             style={styles.cancelButton}
-            onPress={() => setShowImagePickerModal(false)}
+            onPress={closeImagePickerModal}
           >
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </View>
     </Modal>
+  </Animated.View>
   ));
 
   return (

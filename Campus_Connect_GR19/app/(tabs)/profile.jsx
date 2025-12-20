@@ -236,7 +236,7 @@ export default function Profile() {
       />
 
     
-      <Modal visible={menuVisible} transparent animationType="none">
+      <Modal visible={menuVisible} transparent animationType="fade">
         <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={toggleMenu}>
           <Animated.View
             style={[
