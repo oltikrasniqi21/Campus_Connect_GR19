@@ -1,0 +1,121 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`LFManager Snapshot renders correctly (empty state) 1`] = `
+<RNCSafeAreaView
+  edges={
+    {
+      "bottom": "additive",
+      "left": "additive",
+      "right": "additive",
+      "top": "additive",
+    }
+  }
+  style={
+    {
+      "backgroundColor": "#F8F8F8",
+      "flex": 1,
+    }
+  }
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "backgroundColor": "#fff",
+        "borderRadius": 25,
+        "elevation": 4,
+        "flexDirection": "row",
+        "marginHorizontal": 16,
+        "marginTop": 12,
+        "paddingHorizontal": 12,
+        "paddingVertical": 8,
+        "shadowColor": "#000",
+        "shadowOffset": {
+          "height": 2,
+          "width": 0,
+        },
+        "shadowOpacity": 0.1,
+      }
+    }
+  >
+    <Text />
+    <TextInput
+      onChangeText={[Function]}
+      placeholder="Search"
+      placeholderTextColor="#888"
+      style={
+        {
+          "color": "#333",
+          "flex": 1,
+          "marginHorizontal": 8,
+        }
+      }
+      value=""
+    />
+    <Text />
+  </View>
+  <RCTScrollView
+    ListEmptyComponent={[Function]}
+    data={[]}
+    getItem={[Function]}
+    getItemCount={[Function]}
+    keyExtractor={[Function]}
+    onContentSizeChange={[Function]}
+    onLayout={[Function]}
+    onMomentumScrollBegin={[Function]}
+    onMomentumScrollEnd={[Function]}
+    onScroll={[Function]}
+    onScrollBeginDrag={[Function]}
+    onScrollEndDrag={[Function]}
+    removeClippedSubviews={false}
+    renderItem={[Function]}
+    scrollEventThrottle={0.0001}
+    showsVerticalScrollIndicator={false}
+    stickyHeaderIndices={[]}
+    viewabilityConfigCallbackPairs={[]}
+  >
+    <View>
+      <View
+        entering={BaseAnimationMock {}}
+      >
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "justifyContent": "center",
+              "marginTop": 80,
+              "paddingHorizontal": 20,
+            }
+          }
+        >
+          <Text />
+          <Text
+            style={
+              {
+                "color": "#820D0D",
+                "fontSize": 20,
+                "fontWeight": "700",
+                "marginTop": 10,
+              }
+            }
+          >
+            No items yet
+          </Text>
+          <Text
+            style={
+              {
+                "color": "#555",
+                "fontSize": 14,
+                "marginTop": 4,
+                "textAlign": "center",
+              }
+            }
+          >
+            Start by posting a lost or found item.
+          </Text>
+        </View>
+      </View>
+    </View>
+  </RCTScrollView>
+</RNCSafeAreaView>
+`;
