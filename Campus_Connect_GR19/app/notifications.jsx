@@ -39,3 +39,13 @@ export const notifyAnswerToQuestion = async (questionText) => {
     trigger: null,
   });
 };
+
+export const notifyCallAttempt = async () => {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "📞 Thirrje",
+      body: "Po tenton të kontaktosh pronarin e postimit.",
+    },
+    trigger: null, 
+  });
+};

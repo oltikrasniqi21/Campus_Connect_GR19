@@ -14,12 +14,21 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams } from "expo-router";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
+import { Linking } from "react-native";
+import {
+  registerLocalNotifications,
+  notifyCallAttempt,
+} from "../notifications";
 
 export default function ItemDetails() {
   const { itemId, userId } = useLocalSearchParams();
 
   const [item, setItem] = useState(null);
   const [postUser, setPostUser] = useState(null);
+
+  useEffect(() => {
+    registerLocalNotifications();
+  }, []);
 
   useEffect(() => {
     if (!itemId) return;
@@ -44,12 +53,24 @@ export default function ItemDetails() {
   if (!item || !postUser) {
     return (
       <SafeAreaView style={styles.container}>
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
           <ActivityIndicator size="large" color="#820D0D" />
         </View>
       </SafeAreaView>
     );
   }
+
+  const handleCall = async () => {
+    await notifyCallAttempt();
+  };
+
+  const handleEmail = async () => {
+    if (!postUser?.email) return;
+
+    Linking.openURL(`mailto:${postUser.email}`);
+  };
 
   const isLost = item.status === "Lost";
 
@@ -111,11 +132,11 @@ export default function ItemDetails() {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.callButton}>
+          <TouchableOpacity onPress={handleCall} style={styles.callButton}>
             <Text style={styles.callText}>📞 Call Now</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.messageButton}>
+          <TouchableOpacity onPress={handleEmail} style={styles.messageButton}>
             <Text style={styles.messageText}>✉️ Send Email</Text>
           </TouchableOpacity>
         </View>
@@ -149,7 +170,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
 
-  content: { 
+  content: {
     paddingBottom: 10,
   },
 
@@ -203,10 +224,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  infoText: { 
-    color: "#333", 
-    fontSize: 15, 
-    lineHeight: 22 
+  infoText: {
+    color: "#333",
+    fontSize: 15,
+    lineHeight: 22,
   },
   posterWrapper: {
     marginTop: 25,
@@ -276,10 +297,10 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
   },
 
-  callText: { 
-    color: "#fff", 
-    fontWeight: "700", 
-    fontSize: 17 
+  callText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 17,
   },
 
   messageButton: {
@@ -295,10 +316,9 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
 
-  messageText: { 
-    color: "#333", 
-    fontWeight: "700", 
-    fontSize: 17 
+  messageText: {
+    color: "#333",
+    fontWeight: "700",
+    fontSize: 17,
   },
 });
-
