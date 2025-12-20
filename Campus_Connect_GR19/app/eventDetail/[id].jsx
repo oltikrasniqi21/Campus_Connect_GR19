@@ -1,13 +1,16 @@
 import { useLocalSearchParams } from "expo-router";
-import { Text, View, StyleSheet, ScrollView } from "react-native";
+import { Text, View, StyleSheet, ScrollView, Touchable, TouchableOpacity} from "react-native";
 import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../firebase";
+import { useAuth } from "../../context/AuthContext";
+import { deleteDoc } from "firebase/firestore";
 
 export default function EventDetails() {
   const { id } = useLocalSearchParams(); 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { user, loadingg } = useAuth();
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -41,6 +44,10 @@ export default function EventDetails() {
     ? event.time.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     : event.time || "No time";
 
+  const deleteEvent = async (id) => {
+    await deleteDoc(doc(db, "events", id));
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.card}>
@@ -60,6 +67,10 @@ export default function EventDetails() {
 
         <Text style={styles.sectionTitle}>Detaje</Text>
         <Text style={styles.description}>{event.description}</Text>
+
+        <TouchableOpacity onPress={() => deleteEvent(id)}>
+            <Text style={{color: 'red', marginTop: 20, fontWeight: 'bold'}}>Delete Event</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );

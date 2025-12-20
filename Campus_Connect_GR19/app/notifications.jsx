@@ -49,3 +49,13 @@ export const notifyCallAttempt = async () => {
     trigger: null, 
   });
 };
+
+export const newEventAdded = async (eventName) => {
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "New Event!",
+      body: `Nje event i ri po organizohet: ${eventName}. Informohu tani!`,
+    },
+    trigger: null, 
+  });
+};
