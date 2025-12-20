@@ -1,4 +1,4 @@
-import React, { use, useState } from "react";
+import React, { use, useState, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  Animated,
 } from "react-native";
 import { auth, db } from "../../firebase";
 import { arrayRemove, doc, updateDoc } from "firebase/firestore";
@@ -28,7 +29,26 @@ export default function QnACard({
   const [editingAnswerId, setEditingAnswerId] = useState(null);
   const [editingAnswerText, setEditingAnswerText] = useState("");
 
+  const bounceAnim = useRef(new Animated.Value(1)).current;
+
   const upvotes = item.upvotes || [];
+
+  const handleLikePress = () => {
+    Animated.sequence([
+      Animated.timing(bounceAnim, {
+        toValue: 1.4,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.spring(bounceAnim, {
+        toValue: 1,
+        friction: 4,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    handleUpvote(item.id, upvotes);
+  };
 
   const timeAgo = (Timestamp) => {
     const now = new Date();
@@ -131,16 +151,19 @@ export default function QnACard({
       </View>
 
       <View style={styles.actionsRow}>
-        <TouchableOpacity onPress={() => handleUpvote(item.id, upvotes)}>
-          <Text
-            style={{
-              color: upvotes.includes(auth.currentUser.uid)
-                ? "#D40000"
-                : "#555",
-            }}
-          >
-            👍 {upvotes.length}
-          </Text>
+        <TouchableOpacity onPress={handleLikePress}>
+          <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
+            <Text
+              style={{
+                fontWeight: "bold",
+                color: upvotes.includes(auth.currentUser?.uid)
+                  ? "#D40000"
+                  : "#555",
+              }}
+            >
+              👍 {upvotes.length}
+            </Text>
+          </Animated.View>
         </TouchableOpacity>
         {item.userId === auth.currentUser?.uid && (
           <>
