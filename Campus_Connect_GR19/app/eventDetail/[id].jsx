@@ -66,6 +66,12 @@ export default function EventDetails() {
     setModalVisible(true);
 
   };
+   const handleModalClose = () => {
+      setModalVisible(false);
+      if (modalType === "success") {
+      router.back();
+    }
+  }
 
   const openExternalMap = () => {
     let url = "";
@@ -98,11 +104,12 @@ export default function EventDetails() {
     }
   };
 
-    return (
-      <ScrollView style={styles.container}>
-        <View style={styles.card}>
-          <Text style={styles.title}>{event.title}</Text>
-          <View>
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.card}>
+        <Text style={styles.title}>{event.title}</Text>
+
+         <View>
             {event.eventPhoto && (
               <Image
                 source={{ uri: event.eventPhoto }}
@@ -114,20 +121,21 @@ export default function EventDetails() {
                   resizeMode: "cover",
                 }}
               />
-        )}
+            )}
           </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.icon}>📍</Text>
-            <Text style={styles.infoText}>{event.location}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.icon}>📅</Text>
-            <Text style={styles.infoText}>{date}</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.icon}>⏰</Text>
-            <Text style={styles.infoText}>{time}</Text>
-          </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.icon}>📍</Text>
+          <Text style={styles.infoText}>{event.location}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.icon}>📅</Text>
+          <Text style={styles.infoText}>{date}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.icon}>⏰</Text>
+          <Text style={styles.infoText}>{time}</Text>
+        </View>
 
         <Text style={styles.sectionTitle}>Detaje</Text>
         <Text style={styles.description}>{event.description}</Text>
@@ -166,7 +174,7 @@ export default function EventDetails() {
             visible={modalVisible}
             type={modalType}
             message={modalMessage}
-            onClose={() => router.back()}
+            onClose={handleModalClose}
         />
 
       </View>
@@ -271,6 +279,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 15,
     marginTop: 20,
-  },
-
+  }
 });
