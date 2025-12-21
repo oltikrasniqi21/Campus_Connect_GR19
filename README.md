@@ -81,18 +81,48 @@ npx expo start
   - sende të gjetura që përputhen me interesat e përdoruesit  
 
 ## Foto nga aplikacionni
- ### Home Page
+  <details>
+  <summary><strong>Home Page</strong></summary>
+   
+  ![Home Page](Campus_Connect_GR19/docs/home-page.png)
+  ![Event Details](Campus_Connect_GR19/docs/event-detail.png)
+  ![New Post](Campus_Connect_GR19/docs/new-post.png)
+  
+  </details>
 
- ### Lost & Found
+  <details>
+  <summary><strong>Lost & Found</strong></summary>
+
   ![Lost & Found](Campus_Connect_GR19/docs/lost-found.png)
   ![MoreButton](Campus_Connect_GR19/docs/more-button.png)
   ![PostLFITem](Campus_Connect_GR19/docs/post-lfitem.png)
+  
+  </details>
 
- ### Q&A Screen
+   <details>
+  <summary><strong>Q&A Screen</strong></summary>
+   
+  ![Q&A Screen](Campus_Connect_GR19/docs/q-a.png)
+  ![FAQ](Campus_Connect_GR19/docs/answer.png)
 
- ### Profile
+  </details>
 
- ### Saved Posts
+  <details>
+  <summary><strong>Profile</strong></summary>
+   
+  ![Profile Screen](Campus_Connect_GR19/docs/profile.png)
+  ![Edit Profile](Campus_Connect_GR19/docs/edit-profile.png)
+  ![Profile Menu](Campus_Connect_GR19/docs/profile-menu.png)
+  
+  </details>
+
+   <details>
+  <summary><strong>Saved Posts</strong></summary>
+   
+  ![Saved Posts](Campus_Connect_GR19/docs/saved-posts.png)
+  ![New Folder](Campus_Connect_GR19/docs/new-folder.png)
+
+  </details>
 
 
 ## Antarët e grupit
