@@ -1,0 +1,190 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Flashcard Component correctly renders event data in flashcard 1`] = `
+<View
+  style={
+    {
+      "alignItems": "center",
+      "backgroundColor": "#f8f8f8",
+      "borderRadius": 20,
+      "elevation": 3,
+      "flexDirection": "row",
+      "height": 187.5,
+      "justifyContent": "space-between",
+      "marginBottom": 15,
+      "padding": 12,
+      "shadowColor": "#000",
+      "shadowOffset": {
+        "height": 4,
+        "width": 0,
+      },
+      "shadowOpacity": 0.1,
+      "shadowRadius": 6,
+      "width": "100%",
+    }
+  }
+>
+  <View
+    style={
+      {
+        "flex": 1,
+      }
+    }
+  >
+    <Text
+      numberOfLines={1}
+      style={
+        {
+          "color": "#333",
+          "fontFamily": "Montserrat",
+          "fontSize": 41.25,
+          "fontWeight": "bold",
+        }
+      }
+    >
+      Task Reminder
+    </Text>
+    <Text
+      style={
+        {
+          "color": "#666",
+          "fontFamily": "Montserrat",
+          "fontSize": 26.250000000000004,
+          "marginTop": 4,
+        }
+      }
+    >
+      2025-12-16
+       
+      <Text
+        style={
+          {
+            "fontWeight": "bold",
+          }
+        }
+      >
+        14:00
+      </Text>
+      
+
+      Lokacioni: 
+      Library Hall
+    </Text>
+  </View>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "flexDirection": "row",
+        "gap": 8,
+        "justifyContent": "flex-end",
+      }
+    }
+  >
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={false}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+        }
+      }
+    >
+      <Text
+        href="eventDetail/flashcard-123"
+        onPress={[Function]}
+        role="link"
+      >
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "backgroundColor": "#820d0d",
+              "borderRadius": 20,
+              "flexDirection": "row",
+              "height": 35,
+              "paddingHorizontal": 10,
+            }
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#fcfcfc",
+                "fontFamily": "Montserrat",
+                "fontSize": 15,
+                "fontWeight": "600",
+              }
+            }
+          >
+            See More
+          </Text>
+          <Text />
+        </View>
+      </Text>
+    </View>
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+          "padding": 5,
+        }
+      }
+    >
+      <Text />
+    </View>
+  </View>
+</View>
+`;
