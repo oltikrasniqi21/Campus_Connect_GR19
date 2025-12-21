@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import MyMap from "../../components/MyMap"; 
@@ -27,37 +28,37 @@ export default function EventDetails() {
   const [modalMessage, setModalMessage] = useState("");
 
 
-    useEffect(() => {
-      const loadEvent = async () => {
-        try {
-          const docRef = doc(db, "events", id);
-          const docSnap = await getDoc(docRef);
+  useEffect(() => {
+    const loadEvent = async () => {
+      try {
+        const docRef = doc(db, "events", id);
+        const docSnap = await getDoc(docRef);
 
-          if (docSnap.exists()) {
-            setEvent({ id: docSnap.id, ...docSnap.data() });
-          } else {
-            setEvent(null);
-          }
-        } catch (err) {
-          console.error(err);
-        } finally {
-          setLoading(false);
+        if (docSnap.exists()) {
+          setEvent({ id: docSnap.id, ...docSnap.data() });
+        } else {
+          setEvent(null);
         }
-      };
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      loadEvent();
-    }, [id]);
+    loadEvent();
+  }, [id]);
 
-    if (loading) return <Text style={styles.loading}>Loading...</Text>;
-    if (!event) return <Text style={styles.loading}>Event not found</Text>;
+  if (loading) return <Text style={styles.loading}>Loading...</Text>;
+  if (!event) return <Text style={styles.loading}>Event not found</Text>;
 
-    const date = event.date?.toDate?.()
-      ? event.date.toDate().toLocaleDateString()
-      : event.date || "No date";
+  const date = event.date?.toDate?.()
+    ? event.date.toDate().toLocaleDateString()
+    : event.date || "No date";
 
-    const time = event.time?.toDate?.()
-      ? event.time.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-      : event.time || "No time";
+  const time = event.time?.toDate?.()
+    ? event.time.toDate().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+    : event.time || "No time";
 
   const deleteEvent = async (id) => {
     await deleteDoc(doc(db, "events", id));
@@ -183,13 +184,6 @@ export default function EventDetails() {
 }
 
 const styles = StyleSheet.create({
-   deleteButton: { 
-    alignItems: 'center',
-    backgroundColor: '#820d0d',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    height: 35 
-  },
   container: {
     flex: 1,
     backgroundColor: "#f9f9f9",
