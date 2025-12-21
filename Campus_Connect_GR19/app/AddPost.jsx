@@ -37,9 +37,9 @@ export default function AddEvent() {
   const [eventPhoto, setEventPhoto] = useState(null);
 
   const [error, setError] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
+`  const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState("");
-  const [modalMessage, setModalMessage] = useState("");
+  const [modalMessage, setModalMessage] = useState("");`
   const [uploadingImage, setUploadingImage] = useState(false);
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
   const [eventPublisher, setEventPublisher] = useState(null);
