@@ -6,7 +6,8 @@ import {
   ScrollView, 
   TouchableOpacity, 
   Linking, 
-  Platform 
+  Platform ,
+  Image
 } from "react-native";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -14,12 +15,18 @@ import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import MyMap from "../../components/MyMap"; 
+import ConfirmModal from "../../components/ConfirmModal.jsx";
+import { router } from "expo-router";
 
 export default function EventDetails() {
   const { id } = useLocalSearchParams(); 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { user, loadingg } = useAuth();
+  const { user, setUser } = useAuth();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+
 
   useEffect(() => {
     const loadEvent = async () => {
@@ -55,7 +62,17 @@ export default function EventDetails() {
 
   const deleteEvent = async (id) => {
     await deleteDoc(doc(db, "events", id));
+    setModalType("success");
+    setModalMessage("Event deleted successfully.");
+    setModalVisible(true);
+
   };
+   const handleModalClose = () => {
+      setModalVisible(false);
+      if (modalType === "success") {
+      router.back();
+    }
+  }
 
   const openExternalMap = () => {
     let url = "";
@@ -92,6 +109,22 @@ export default function EventDetails() {
     <ScrollView style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>{event.title}</Text>
+
+         <View>
+            {event.eventPhoto && (
+              <Image
+                source={{ uri: event.eventPhoto }}
+                style={{
+                  width: "100%",
+                  height: 200,
+                  borderRadius: 16,
+                  marginBottom: 15,
+                  resizeMode: "cover",
+                }}
+              />
+            )}
+          </View>
+
         <View style={styles.infoRow}>
           <Text style={styles.icon}>📍</Text>
           <Text style={styles.infoText}>{event.location}</Text>
@@ -132,9 +165,19 @@ export default function EventDetails() {
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => deleteEvent(id)}>
-            <Text style={{color: 'red', marginTop: 30, fontWeight: 'bold'}}>Delete Event</Text>
-        </TouchableOpacity>
+        {user && user.id === event.publisher && (
+          <TouchableOpacity style={styles.deleteButton} onPress={() => deleteEvent(id)}>
+            <Text style={{color: 'white', fontWeight: 'bold'}}>Delete Event</Text>
+          </TouchableOpacity>
+        )}
+
+          <ConfirmModal
+            visible={modalVisible}
+            type={modalType}
+            message={modalMessage}
+            onClose={handleModalClose}
+        />
+
       </View>
     </ScrollView>
   );
@@ -224,4 +267,11 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontWeight: '500'
   },
+  deleteButton: { 
+    alignItems: 'center',
+    backgroundColor: '#820d0d',
+    borderRadius: 10,
+    paddingVertical: 15,
+    marginTop: 20,
+  }
 });
