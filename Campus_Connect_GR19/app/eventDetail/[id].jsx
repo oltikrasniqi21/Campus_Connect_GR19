@@ -1,10 +1,19 @@
 import { useLocalSearchParams } from "expo-router";
-import { Text, View, StyleSheet, ScrollView, Touchable, TouchableOpacity} from "react-native";
-import { doc, getDoc } from "firebase/firestore";
+import { 
+  Text, 
+  View, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  Linking, 
+  Platform 
+} from "react-native";
+import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
-import { deleteDoc } from "firebase/firestore";
+import { Ionicons } from "@expo/vector-icons";
+import MyMap from "../../components/MyMap"; 
 
 export default function EventDetails() {
   const { id } = useLocalSearchParams(); 
@@ -48,6 +57,37 @@ export default function EventDetails() {
     await deleteDoc(doc(db, "events", id));
   };
 
+  const openExternalMap = () => {
+    let url = "";
+    
+    if (event.coordinates) {
+      const { latitude, longitude } = event.coordinates;
+      const label = encodeURIComponent(event.title || "Event Location");
+
+      if (Platform.OS === 'ios') {
+        url = `maps:0,0?q=${label}@${latitude},${longitude}`;
+      } else if (Platform.OS === 'android') {
+        url = `geo:0,0?q=${latitude},${longitude}(${label})`;
+      } else {
+        url = `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`;
+      }
+    } 
+    else if (event.location) {
+      const query = encodeURIComponent(event.location);
+      if (Platform.OS === 'ios') {
+        url = `maps:0,0?q=${query}`;
+      } else if (Platform.OS === 'android') {
+        url = `geo:0,0?q=${query}`;
+      } else {
+        url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+      }
+    }
+
+    if (url) {
+      Linking.openURL(url).catch(err => console.error("An error occurred", err));
+    }
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.card}>
@@ -68,8 +108,32 @@ export default function EventDetails() {
         <Text style={styles.sectionTitle}>Detaje</Text>
         <Text style={styles.description}>{event.description}</Text>
 
+        <Text style={styles.sectionTitle}>Harta</Text>
+        
+        {event.coordinates ? (
+          <MyMap 
+            initialCoords={event.coordinates} 
+            readOnly={true} 
+          />
+        ) : (
+          <View style={styles.noMapContainer}>
+             <Ionicons name="location-outline" size={40} color="#ccc" />
+             <Text style={styles.noMapText}>No pin dropped for this event.</Text>
+          </View>
+        )}
+
+        <TouchableOpacity style={styles.mapButton} onPress={openExternalMap}>
+          <Ionicons name="map" size={20} color="white" style={{marginRight: 10}} />
+          <Text style={styles.mapButtonText}>
+            {event.coordinates 
+              ? `Open Pin in ${Platform.OS === 'ios' ? 'Apple Maps' : 'Google Maps'}`
+              : `Search "${event.location}" in Maps`
+            }
+          </Text>
+        </TouchableOpacity>
+
         <TouchableOpacity onPress={() => deleteEvent(id)}>
-            <Text style={{color: 'red', marginTop: 20, fontWeight: 'bold'}}>Delete Event</Text>
+            <Text style={{color: 'red', marginTop: 30, fontWeight: 'bold'}}>Delete Event</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -97,6 +161,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
+    marginBottom: 20,
   },
   title: {
     fontSize: 28,
@@ -128,5 +193,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#555",
     lineHeight: 24,
+  },
+  mapButton: {
+    backgroundColor: "#820D0D", 
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 10,
+    marginTop: 15,
+    elevation: 2
+  },
+  mapButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  noMapContainer: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#eee'
+  },
+  noMapText: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5,
+    fontWeight: '500'
   },
 });
