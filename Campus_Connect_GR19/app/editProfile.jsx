@@ -1,4 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   View,
   Text,
@@ -8,15 +13,14 @@ import {
   Image,
   ScrollView,
   Alert,
-  Platform,
   Modal,
-  ActionSheetIOS,
+  Animated,
   ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { auth, db } from "../firebase.js"; 
+import { auth, db } from "../firebase.js";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 
@@ -30,6 +34,17 @@ export default function EditProfile() {
   const [profilePicture, setProfilePicture] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    if (showImagePickerModal) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showImagePickerModal]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -52,80 +67,18 @@ export default function EditProfile() {
     loadUser();
   }, [currentUser]);
 
-  /* =========================
-     IMAGE PICKING & COMPRESSION
-     ========================= */
-
-  const handleChangePicture = async () => {
-    if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ["Cancel", "Take Photo", "Choose from Library"],
-          cancelButtonIndex: 0,
-        },
-        async (buttonIndex) => {
-          if (buttonIndex === 1) await pickFromCamera();
-          if (buttonIndex === 2) await pickFromLibrary();
-        }
-      );
-    } else {
-      setShowImagePickerModal(true);
-    }
-  };
-
-  const pickFromCamera = async () => {
-    const permission = await ImagePicker.requestCameraPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Permission required", "Camera access is required.");
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      await processImage(result.assets[0].uri);
-    }
-  };
-
-  const pickFromLibrary = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert("Permission required", "Media library access is required.");
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      await processImage(result.assets[0].uri);
-    }
-  };
-
- 
-  const processImage = async (uri) => {
+  const processImage = useCallback(async (uri) => {
     try {
       setUploading(true);
-
       const manipulated = await ImageManipulator.manipulateAsync(
         uri,
         [{ resize: { width: 300, height: 300 } }],
         {
           compress: 0.5,
           format: ImageManipulator.SaveFormat.JPEG,
-          base64: true, 
+          base64: true,
         }
       );
-
       const base64String = `data:image/jpeg;base64,${manipulated.base64}`;
       setProfilePicture(base64String);
     } catch (error) {
@@ -134,15 +87,61 @@ export default function EditProfile() {
     } finally {
       setUploading(false);
     }
+  }, []);
+
+  const pickFromCamera = useCallback(async () => {
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission required", "Camera access is required.");
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      await processImage(result.assets[0].uri);
+    }
+  }, [processImage]);
+
+  const pickFromLibrary = useCallback(async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert("Permission required", "Media library access is required.");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled) {
+      await processImage(result.assets[0].uri);
+    }
+  }, [processImage]);
+
+  const closeImagePickerModal = (onFinishedCallback) => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowImagePickerModal(false);
+  
+      if (onFinishedCallback && typeof onFinishedCallback === 'function') {
+        setTimeout(onFinishedCallback, 100);
+      }
+    });
   };
 
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!currentUser) {
       Alert.alert("Error", "No user logged in");
       return;
     }
-
     setUploading(true);
     try {
       await updateDoc(doc(db, "users", currentUser.uid), {
@@ -151,85 +150,35 @@ export default function EditProfile() {
         bio: bio,
         photoURL: profilePicture,
       });
-
       Alert.alert("Success", "Profile updated successfully!");
-      router.back(); 
+      router.back();
     } catch (err) {
       console.error("Error saving profile:", err);
-      if (err.toString().includes("exceeds the maximum allowed size")) {
-         Alert.alert("Error", "Image is still too large. Please try a simpler photo.");
-      } else {
-         Alert.alert("Error", "Failed to save profile.");
-      }
+      Alert.alert("Error", "Failed to save profile.");
     } finally {
       setUploading(false);
     }
-  };
+  }, [currentUser, firstName, lastName, bio, profilePicture, router]);
 
-  const ImagePickerModal = () => (
-    <Modal
-      visible={showImagePickerModal}
-      transparent={true}
-      animationType="slide"
-      onRequestClose={() => setShowImagePickerModal(false)}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <TouchableOpacity 
-            style={styles.modalOption}
-            onPress={() => {
-              setShowImagePickerModal(false);
-              pickFromCamera();
-            }}
-          >
-            <Ionicons name="camera-outline" size={24} color="#333" />
-            <Text style={styles.modalOptionText}>Take Photo</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.modalOption}
-            onPress={() => {
-              setShowImagePickerModal(false);
-              pickFromLibrary();
-            }}
-          >
-            <Ionicons name="images-outline" size={24} color="#333" />
-            <Text style={styles.modalOptionText}>Choose from Library</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.cancelButton}
-            onPress={() => setShowImagePickerModal(false)}
-          >
-            <Text style={styles.cancelButtonText}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
-  );
+  const avatarSource = useMemo(() => {
+    return profilePicture
+      ? { uri: profilePicture }
+      : require("../assets/images/avatar-placeholder.png");
+  }, [profilePicture]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.avatarSection}>
-        <Image
-          source={
-            profilePicture
-              ? { uri: profilePicture }
-              : require("../assets/images/avatar-placeholder.png")
-          }
-          style={styles.avatar}
-          resizeMode="cover"
-        />
-
+        <Image source={avatarSource} style={styles.avatar} resizeMode="cover" />
         <TouchableOpacity
           style={[styles.changePicBtn, uploading && styles.disabledBtn]}
-          onPress={handleChangePicture}
+          onPress={() => setShowImagePickerModal(true)}
           disabled={uploading}
         >
           {uploading ? (
-             <ActivityIndicator size="small" color="#fff" />
+            <ActivityIndicator size="small" color="#fff" />
           ) : (
-             <Ionicons name="camera" size={24} color="#fff" />
+            <Ionicons name="camera" size={24} color="#fff" />
           )}
           <Text style={styles.changePicText}>
             {uploading ? " Processing..." : " Change Picture"}
@@ -244,14 +193,12 @@ export default function EditProfile() {
           value={firstName}
           onChangeText={setFirstName}
         />
-
         <Text style={styles.label}>Last Name</Text>
         <TextInput
           style={styles.input}
           value={lastName}
           onChangeText={setLastName}
         />
-
         <Text style={styles.label}>Bio</Text>
         <TextInput
           style={[styles.input, styles.bioInput]}
@@ -260,29 +207,62 @@ export default function EditProfile() {
           multiline
         />
 
-        <TouchableOpacity 
-            style={[styles.saveBtn, uploading && styles.disabledBtn]} 
-            onPress={handleSave}
-            disabled={uploading}
+        <TouchableOpacity
+          style={[styles.saveBtn, uploading && styles.disabledBtn]}
+          onPress={handleSave}
+          disabled={uploading}
         >
           <Text style={styles.saveBtnText}>
             {uploading ? "Saving..." : "Save"}
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.cancelText}>Cancel</Text>
         </TouchableOpacity>
       </View>
 
-      <ImagePickerModal />
+      <Modal
+        visible={showImagePickerModal}
+        transparent
+        animationType="none" 
+        onRequestClose={() => closeImagePickerModal()}
+      >
+        <View style={styles.modalOverlay}>
+          <Animated.View 
+            style={[styles.modalContent, { opacity: fadeAnim, transform: [{translateY: fadeAnim.interpolate({inputRange: [0, 1], outputRange: [100, 0]})}] }]}
+          >
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => closeImagePickerModal(pickFromCamera)}
+            >
+              <Ionicons name="camera-outline" size={24} color="#333" />
+              <Text style={styles.modalOptionText}>Take Photo</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={() => closeImagePickerModal(pickFromLibrary)}
+            >
+              <Ionicons name="images-outline" size={24} color="#333" />
+              <Text style={styles.modalOptionText}>Choose from Library</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => closeImagePickerModal()}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1, 
+    flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 30,
     paddingBottom: 50,
@@ -292,10 +272,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
-  avatarSection: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
+  avatarSection: { alignItems: "center", marginBottom: 30 },
   avatar: {
     width: 110,
     height: 110,
@@ -313,17 +290,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     borderRadius: 12,
   },
-  disabledBtn: {
-    backgroundColor: "#CCCCCC",
-  },
-  changePicText: {
-    color: "#fff",
-    marginLeft: 8,
-    fontSize: 14,
-  },
-  form: {
-    width: "100%",
-  },
+  disabledBtn: { backgroundColor: "#CCCCCC" },
+  changePicText: { color: "#fff", marginLeft: 8, fontSize: 14 },
+  form: { width: "100%" },
   label: {
     fontSize: 14,
     color: "#656565",
@@ -340,10 +309,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
-  bioInput: {
-    height: 100,
-    textAlignVertical: "top",
-  },
+  bioInput: { height: 100, textAlignVertical: "top" },
   saveBtn: {
     backgroundColor: "#820D0D",
     paddingVertical: 16,
@@ -383,19 +349,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  modalOptionText: {
-    fontSize: 16,
-    marginLeft: 15,
-    color: "#333",
-  },
-  cancelButton: {
-    paddingVertical: 18,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  cancelButtonText: {
-    fontSize: 16,
-    color: "#820D0D",
-    fontWeight: "600",
-  },
+  modalOptionText: { fontSize: 16, marginLeft: 15, color: "#333" },
+  cancelButton: { paddingVertical: 18, alignItems: "center", marginTop: 10 },
+  cancelButtonText: { fontSize: 16, color: "#820D0D", fontWeight: "600" },
 });

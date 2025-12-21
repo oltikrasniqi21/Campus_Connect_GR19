@@ -1,3 +1,28 @@
+jest.mock("@expo/vector-icons", () => {
+  const { View } = require("react-native");
+  const MockIcon = () => <View />;
+
+  return {
+    Ionicons: MockIcon,
+    FontAwesome: MockIcon,
+    FontAwesome5: MockIcon,
+    MaterialIcons: MockIcon,
+    MaterialCommunityIcons: MockIcon,
+    AntDesign: MockIcon,
+    Entypo: MockIcon,
+    EvilIcons: MockIcon,
+    Feather: MockIcon,
+    Foundation: MockIcon,
+    Octicons: MockIcon,
+    SimpleLineIcons: MockIcon,
+    Zocial: MockIcon,
+    isto: MockIcon,
+    createIconSet: () => MockIcon,
+    createIconSetFromFontello: () => MockIcon,
+    createIconSetFromIcoMoon: () => MockIcon,
+  };
+});
+
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react-native";
 import Signup from "../app/(auth)/signup";

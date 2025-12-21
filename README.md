@@ -11,6 +11,31 @@ Aplikacioni integron **zbulimin e ngjarjeve**, **menaxhimin e sendave të humbur
 
 ---
 
+## Installation & Setup
+1. Clone Repozitorin:
+```bash
+git clone https://github.com/oltikrasniqi21/Campus_Connect_GR19.git
+```
+2. Navigojme ne project folder:
+```bash
+cd Campus_Connect_GR19
+```
+3. Instalojme Dependencies
+```bash
+npm install
+```
+4. Fillojme development serverin
+```bash
+npx expo start
+```
+5. Mund ta hapim aplikacionin permes disa metodave:
+ - Skanojme QR Code me **Expo Go App** ne Android ose me Camera App ne IOS
+ - Ctrl+Click ne http://localhost:8081 ose vendosim http://localhost:8081 ne nje web browser
+ - (Opsionale) mund te perdorim IOS Simulator ose Android Emulator (shtypim i ose a per ta hapur aplikacionin)
+
+
+
+
 ## Features
 
 ### Home
@@ -56,10 +81,19 @@ Aplikacioni integron **zbulimin e ngjarjeve**, **menaxhimin e sendave të humbur
   - sende të gjetura që përputhen me interesat e përdoruesit  
 
 ## Foto nga aplikacionni
-### Lost & Found
-![Lost & Found](docs/Lost&Found.png)
-![MoreButton](docs/MoreButton.png)
-![PostLFITem](docs/PostLFItem.png)
+ ### Home Page
+
+ ### Lost & Found
+  ![Lost & Found](Campus_Connect_GR19/docs/lost-found.png)
+  ![MoreButton](Campus_Connect_GR19/docs/more-button.png)
+  ![PostLFITem](Campus_Connect_GR19/docs/post-lfitem.png)
+
+ ### Q&A Screen
+
+ ### Profile
+
+ ### Saved Posts
+
 
 ## Antarët e grupit
 
@@ -68,3 +102,7 @@ Aplikacioni integron **zbulimin e ngjarjeve**, **menaxhimin e sendave të humbur
 - Olti Krasniqi
 - Bleron Baftiu
 - Valmir Mustafa
+
+
+![Expo](https://img.shields.io/badge/Expo-Managed-orange)
+![React Native](https://img.shields.io/badge/React%20Native-0.72-blue)

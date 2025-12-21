@@ -23,6 +23,7 @@ import { db, auth } from "../firebase.js";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
+import MyMap from "../components/MyMap"; 
 
 export default function AddEvent() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function AddEvent() {
   const [eventLocation, setEventLocation] = useState("");
   const [eventDescription, setEventDescription] = useState("");
   const [eventPhoto, setEventPhoto] = useState(null);
-
+  const [coords, setCoords] = useState(null);
   const [error, setError] = useState("");
 `  const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState("");
@@ -50,15 +51,6 @@ export default function AddEvent() {
     });
     return () => unsubscribe();
   }, []);
-
-  const generateRandomEventImage = () => {
-    const width = 800;
-    const height = 600;
-    const seed = Math.random().toString(36).substring(2);
-    return `https://picsum.photos/${width}/${height}?random=${seed}`;
-  };
-
- 
 
   const handleAddPhotoPress = () => {
     if (Platform.OS === "ios") {
@@ -118,8 +110,6 @@ export default function AddEvent() {
   const processImage = async (uri) => {
     try {
       setUploadingImage(true);
-
-   
       const manipulated = await ImageManipulator.manipulateAsync(
         uri,
         [{ resize: { width: 800 } }], 
@@ -143,8 +133,6 @@ export default function AddEvent() {
   const handleRemovePhoto = () => {
     setEventPhoto(null);
   };
-
-
 
   const handleDateChange = (dateString) => {
     const newDate = new Date(dateString);
@@ -196,7 +184,7 @@ export default function AddEvent() {
       return;
     }
 
-    const finalEventImage = eventPhoto || generateRandomEventImage();
+    const finalEventImage = eventPhoto ? eventPhoto : null;
 
     const newEvent = {
       title: eventTitle,
@@ -206,6 +194,7 @@ export default function AddEvent() {
       description: eventDescription,
       publisher: eventPublisher.uid,
       eventPhoto: finalEventImage,
+      coordinates: coords, 
       createdAt: new Date(),
     };
 
@@ -223,6 +212,7 @@ export default function AddEvent() {
       setEventLocation("");
       setEventDescription("");
       setEventPhoto(null);
+      setCoords(null);
     } catch (error) {
       console.error("Error adding event: ", error);
       setError("Failed to create event. Please try again.");
@@ -308,7 +298,7 @@ export default function AddEvent() {
           ) : (
             <TouchableOpacity 
               style={[styles.photoUploadButton, uploadingImage && styles.uploadingButton]} 
-              onPress={handleAddPhotoPress} // Changed to use our new picker logic
+              onPress={handleAddPhotoPress}
               disabled={uploadingImage}
             >
               <Ionicons name="camera" size={24} color={uploadingImage ? "#999" : "#820D0D"} />
@@ -387,6 +377,12 @@ export default function AddEvent() {
           placeholderTextColor="gray"
           value={eventLocation}
           onChangeText={setEventLocation}
+        />
+
+        <Text style={styles.label}>Vendos pinen ne harte (Opsionale)</Text>
+        <MyMap 
+           onLocationSelect={(coordinate) => setCoords(coordinate)} 
+           readOnly={false}
         />
 
         <Text style={styles.label}>Pershkrimi</Text>
@@ -539,7 +535,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 15
   },
-  
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
