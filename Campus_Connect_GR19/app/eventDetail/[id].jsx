@@ -6,7 +6,8 @@ import {
   ScrollView, 
   TouchableOpacity, 
   Linking, 
-  Platform 
+  Platform ,
+  Image
 } from "react-native";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
@@ -66,6 +67,12 @@ export default function EventDetails() {
     setModalVisible(true);
 
   };
+   const handleModalClose = () => {
+      setModalVisible(false);
+      if (modalType === "success") {
+      router.back();
+    }
+  }
 
   const openExternalMap = () => {
     let url = "";
@@ -102,6 +109,22 @@ export default function EventDetails() {
     <ScrollView style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.title}>{event.title}</Text>
+
+         <View>
+            {event.eventPhoto && (
+              <Image
+                source={{ uri: event.eventPhoto }}
+                style={{
+                  width: "100%",
+                  height: 200,
+                  borderRadius: 16,
+                  marginBottom: 15,
+                  resizeMode: "cover",
+                }}
+              />
+            )}
+          </View>
+
         <View style={styles.infoRow}>
           <Text style={styles.icon}>📍</Text>
           <Text style={styles.infoText}>{event.location}</Text>
@@ -152,7 +175,7 @@ export default function EventDetails() {
             visible={modalVisible}
             type={modalType}
             message={modalMessage}
-            onClose={() => router.back()}
+            onClose={handleModalClose}
         />
 
       </View>
@@ -250,6 +273,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 15,
     marginTop: 20,
-  },
-
+  }
 });
