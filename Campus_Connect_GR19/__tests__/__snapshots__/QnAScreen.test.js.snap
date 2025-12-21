@@ -1,0 +1,198 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Testimet per faqen Q&A Snapshot: Karta e pyetjeve duhet te dukej njesoj 1`] = `
+<View
+  style={
+    {
+      "backgroundColor": "#fff",
+      "borderRadius": 10,
+      "elevation": 3,
+      "marginVertical": 8,
+      "padding": 15,
+      "shadowColor": "#000",
+      "shadowOffset": {
+        "height": 2,
+        "width": 0,
+      },
+      "shadowOpacity": 0.1,
+      "shadowRadius": 3,
+    }
+  }
+>
+  <Text
+    style={
+      {
+        "borderBottomColor": "#E0E0E0",
+        "borderBottomWidth": 1,
+        "color": "#222",
+        "fontSize": 16,
+        "fontWeight": "800",
+        "marginBottom": 10,
+        "paddingBottom": 10,
+      }
+    }
+  >
+    ❓ 
+    Si mund te kontaktoj me administraten?
+  </Text>
+  <Text
+    style={
+      {
+        "color": "#888",
+        "fontSize": 12,
+        "marginBottom": 8,
+      }
+    }
+  >
+    0 sekonda me pare
+  </Text>
+  <View
+    style={
+      {
+        "backgroundColor": "#F9F9F9",
+        "borderRadius": 8,
+        "marginBottom": 10,
+        "marginTop": 5,
+        "padding": 10,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "borderBottomColor": "#EDEDED",
+          "borderBottomWidth": 1,
+          "color": "#820000",
+          "fontSize": 13,
+          "fontWeight": "bold",
+          "marginBottom": 5,
+          "paddingBottom": 3,
+        }
+      }
+    >
+      Përgjigjet:
+    </Text>
+  </View>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "flexDirection": "row",
+        "marginTop": 6,
+      }
+    }
+  >
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onClick={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "opacity": 1,
+        }
+      }
+      testID="upvote-btn"
+    >
+      <View
+        collapsable={false}
+        style={
+          {
+            "transform": [
+              {
+                "scale": 1,
+              },
+            ],
+          }
+        }
+      >
+        <Text
+          style={
+            {
+              "color": "#555",
+              "fontWeight": "bold",
+            }
+          }
+        >
+          👍 
+          0
+        </Text>
+      </View>
+    </View>
+  </View>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onClick={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "alignSelf": "flex-end",
+        "marginTop": 10,
+        "opacity": 1,
+        "paddingHorizontal": 8,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "borderBottomColor": "#820000",
+          "borderBottomWidth": 1,
+          "color": "#820000",
+          "fontSize": 14,
+          "fontWeight": "600",
+        }
+      }
+    >
+      Pergjigju
+    </Text>
+  </View>
+</View>
+`;

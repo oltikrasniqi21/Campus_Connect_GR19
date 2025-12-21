@@ -92,7 +92,7 @@ export default function QandAScreen() {
     return () => unsubscribe();
   }, []);
 
-  const hanldeAddQuestion = async () => {
+  const handleAddQuestion = async () => {
     if (newQuestion.trim() === "") return;
 
     await addDoc(collection(db, "questions"), {
@@ -259,7 +259,7 @@ export default function QandAScreen() {
               />
               <TouchableOpacity
                 style={styles.buttonPrimary}
-                onPress={hanldeAddQuestion}
+                onPress={handleAddQuestion}
               >
                 <Text style={styles.buttonText}>Posto</Text>
               </TouchableOpacity>
@@ -361,15 +361,6 @@ const styles = StyleSheet.create({
 
   searchBox: {
     marginBottom: 10,
-  },
-  inputSimple: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 10,
-    backgroundColor: "#fff",
-    fontSize: 15,
   },
   searchFilterRow: {
     flexDirection: "row",

@@ -151,7 +151,7 @@ const QnACard = React.memo(({
       </View>
 
       <View style={styles.actionsRow}>
-        <TouchableOpacity onPress={handleLikePress}>
+        <TouchableOpacity testID="upvote-btn" onPress={handleLikePress}>
           <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
             <Text
               style={{
