@@ -14,19 +14,18 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import MyMap from "../../components/MyMap"; 
-import ConfirmModal from "../../components/ConfirmModal";
-import { useRouter } from "expo-router";
+import ConfirmModal from "../../components/ConfirmModal.jsx";
+import { router } from "expo-router";
 
-  export default function EventDetails() {
-    const { id } = useLocalSearchParams(); 
-    const [event, setEvent] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const { user, loadingg } = useAuth();
-    const [modalVisible, setModalVisible] = useState(false);
-    const [modalType, setModalType] = useState("");
-    const [modalMessage, setModalMessage] = useState("");
+export default function EventDetails() {
+  const { id } = useLocalSearchParams(); 
+  const [event, setEvent] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const { user, setUser } = useAuth();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
 
-    const router = useRouter();
 
     useEffect(() => {
       const loadEvent = async () => {
@@ -65,6 +64,7 @@ import { useRouter } from "expo-router";
     setModalType("success");
     setModalMessage("Event deleted successfully.");
     setModalVisible(true);
+
   };
 
   const openExternalMap = () => {
@@ -156,9 +156,9 @@ import { useRouter } from "expo-router";
           </Text>
         </TouchableOpacity>
 
-        {user && user.uid === event.publisherId && (
+        {user && user.id === event.publisher && (
           <TouchableOpacity style={styles.deleteButton} onPress={() => deleteEvent(id)}>
-            <Text style={{color: 'white', marginTop: 30, fontWeight: 'bold'}}>Delete Event</Text>
+            <Text style={{color: 'white', fontWeight: 'bold'}}>Delete Event</Text>
           </TouchableOpacity>
         )}
 
@@ -168,6 +168,7 @@ import { useRouter } from "expo-router";
             message={modalMessage}
             onClose={() => router.back()}
         />
+
       </View>
     </ScrollView>
   );
@@ -264,4 +265,12 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontWeight: '500'
   },
+  deleteButton: { 
+    alignItems: 'center',
+    backgroundColor: '#820d0d',
+    borderRadius: 10,
+    paddingVertical: 15,
+    marginTop: 20,
+  },
+
 });
