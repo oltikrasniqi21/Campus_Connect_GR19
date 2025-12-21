@@ -189,7 +189,7 @@ export default function QandAScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar backgroundColor="#820000" barStyle="light-content" />
 
       <FlatList
@@ -271,7 +271,7 @@ export default function QandAScreen() {
         keyExtractor={(item) => item.id.toString()}
         showsVerticalScrollIndicator={false}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 
