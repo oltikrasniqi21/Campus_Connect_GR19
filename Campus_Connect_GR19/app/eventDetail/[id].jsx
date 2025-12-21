@@ -6,14 +6,16 @@ import {
   ScrollView, 
   TouchableOpacity, 
   Linking, 
-  Platform 
+  Platform ,
+  Image
 } from "react-native";
 import { doc, getDoc, deleteDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
 import { useAuth } from "../../context/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import MyMap from "../../components/MyMap"; 
+import ConfirmModal from "../../components/ConfirmModal";
+import { useRouter } from "expo-router";
 
   export default function EventDetails() {
     const { id } = useLocalSearchParams(); 
@@ -60,6 +62,9 @@ import MyMap from "../../components/MyMap";
 
   const deleteEvent = async (id) => {
     await deleteDoc(doc(db, "events", id));
+    setModalType("success");
+    setModalMessage("Event deleted successfully.");
+    setModalVisible(true);
   };
 
   const openExternalMap = () => {
@@ -151,15 +156,31 @@ import MyMap from "../../components/MyMap";
           </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => deleteEvent(id)}>
-            <Text style={{color: 'red', marginTop: 30, fontWeight: 'bold'}}>Delete Event</Text>
-        </TouchableOpacity>
+        {user && user.uid === event.publisherId && (
+          <TouchableOpacity style={styles.deleteButton} onPress={() => deleteEvent(id)}>
+            <Text style={{color: 'white', marginTop: 30, fontWeight: 'bold'}}>Delete Event</Text>
+          </TouchableOpacity>
+        )}
+
+          <ConfirmModal
+            visible={modalVisible}
+            type={modalType}
+            message={modalMessage}
+            onClose={() => router.back()}
+        />
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+   deleteButton: { 
+    alignItems: 'center',
+    backgroundColor: '#820d0d',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    height: 35 
+  },
   container: {
     flex: 1,
     backgroundColor: "#f9f9f9",
