@@ -84,9 +84,9 @@ npx expo start
  ### Home Page
 
  ### Lost & Found
-  ![Lost & Found](docs/lost-found.png)
-  ![MoreButton](docs/more-button.png)
-  ![PostLFITem](docs/post-lfitem.png)
+  ![Lost & Found](Campus_Connect_GR19/docs/lost-found.png)
+  ![MoreButton](Campus_Connect_GR19/docs/more-button.png)
+  ![PostLFITem](Campus_Connect_GR19/docs/post-lfitem.png)
 
  ### Q&A Screen
 
