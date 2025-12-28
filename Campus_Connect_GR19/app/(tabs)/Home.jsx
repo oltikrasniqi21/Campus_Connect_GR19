@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet } from "react-native";
+import { ScrollView, StyleSheet, FlatList } from "react-native";
 import { Flashcard } from "@/components/Homepage/flashcards.jsx";
 import {
   collection,
@@ -17,6 +17,7 @@ import { Text, View } from "react-native";
 import { screenWidth } from "./_layout";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
+
 
 export default function TabOneScreen() {
   const { user, loading } = useAuth();
@@ -76,31 +77,34 @@ export default function TabOneScreen() {
     <View style={styles.container}>
       <Text style={styles.welcome}>Welcome, {user.firstname || "User"}</Text>
 
-      <ScrollView style={styles.eventsContainer}>
-        <Text style={styles.sectionTitle}>Eventet Aktuale!</Text>
-        {events.map((event) => {
-          const date = event.date?.toDate?.()
-            ? event.date.toDate().toLocaleDateString()
+      <FlatList 
+      style={styles.eventsContainer}
+      data={events}
+      keyExtractor={(item) => item.id}
+      ListHeaderComponent={<Text style={styles.sectionTitle}>Eventet Aktuale!</Text>}
+      renderItem={({item}) => {
+          const date = item.date?.toDate?.()
+            ? item.date.toDate().toLocaleDateString()
             : "No date";
 
-          const time = event.time?.toDate?.()
-            ? event.time
+          const time = item.time?.toDate?.()
+            ? item.time
                 .toDate()
                 .toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-            : event.time || "No time";
+            : item.time || "No time";
 
           return (
             <Flashcard
-              key={event.id}
-              id={event.id}
-              title={event.title}
+              key={item.id}
+              id={item.id}
+              title={item.title}
               date={date}
               time={time}
-              location={event.location}
+              location={item.location}
             />
           );
-        })}
-      </ScrollView>
+        }}
+      />
     </View>
   );
 }
